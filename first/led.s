@@ -27,6 +27,7 @@ led_init:
 
 	push {lr}
 
+	/* Set pinmux: LED pins are on GPIO1_21-24 which are multiplexed with GPMC_A5-A8 */
 	ldr base, =ctrl_base
 	mov tmp, 0x27
 	str tmp, [base, ctrl_conf_gpmc_a5]
@@ -34,16 +35,19 @@ led_init:
 	str tmp, [base, ctrl_conf_gpmc_a7]
 	str tmp, [base, ctrl_conf_gpmc_a8]
 
+	/* Enable the clock for the GPIO1 module */
 	ldr base, =cm_per_base
 	mov tmp, 2
 	str tmp, [base, cm_per_gpio1_clkctrl]
 
+	/* Set the LED pins as outputs */
 	ldr base, =gpio1_base
 	ldr tmp, [base, gpio_oe]
 	@bfc tmp, 21, 4
 	bic tmp, tmp, (0xf << 21)
 	str tmp, [base, gpio_oe]
 
+	/* Clear LEDs on initialization */
 	mov r0, 0b1111
 	bl led_clear
 
@@ -59,8 +63,11 @@ led_clear:
 	gpio_base	.req r1
 
 	ldr gpio_base, =gpio1_base
+
+	/* Sanitize argument and shift into the proper position */
 	and pattern, pattern, 0xf
 	lsl pattern, pattern, 21
+
 	str pattern, [gpio_base, gpio_cleardataout]
 
 	bx lr
@@ -75,8 +82,11 @@ led_set:
 	gpio_base	.req r1
 
 	ldr gpio_base, =gpio1_base
+	
+	/* Sanitize argument and shift into the proper position */
 	and pattern, pattern, 0xf
 	lsl pattern, pattern, 21
+
 	str pattern, [gpio_base, gpio_setdataout]
 
 	bx lr
@@ -87,12 +97,15 @@ led_set:
 .global led_write
 led_write:
 
-	pattern			.req r0
+	pattern .req r0
 
 	push {lr}
 
+	/* Clear the inverse of the pattern we were passed */
 	eor pattern, pattern, pattern
 	bl led_clear
+
+	/* Invert it back and set the pattern */
 	eor pattern, pattern, pattern
 	bl led_set
 
