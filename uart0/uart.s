@@ -72,6 +72,9 @@ wait_to_transmit:
 	tst tmp, (1 << uart_lsr_txfifoe)
 	beq wait_to_transmit
 
+	/* Sanitize input */
+	and character, character, 0xff
+
 	/* Put character in the transmit FIFO */
 	str character, [uart_base, uart_thr]
 

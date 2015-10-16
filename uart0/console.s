@@ -28,8 +28,9 @@ console_init:
 
 	/* Set pinmux: UART0 pins are on UART0_RXD and UART0_TXD */
 	ldr base, =ctrl_base
-	mov tmp, 0x20
+	mov tmp, 0x10
 	str tmp, [base, ctrl_conf_uart0_rxd]
+	mov tmp, 0x00
 	str tmp, [base, ctrl_conf_uart0_txd]
 
 	/* Enable clocks required for UART0 */

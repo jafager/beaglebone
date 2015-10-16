@@ -54,44 +54,24 @@ _start:
     ldr r0, =UART0_BASE
     ldr r1, =26
 .uart_init:
-	/* waiting on recieve errors to clear */
-    ldrb    r3, [r0, #20]
-    uxtb    r3, r3
-    tst     r3, #0x40
-    beq     .uart_init
-	/* disable interrupts */
-    mov     r3, #0
-    strb    r3, [r0, #4]
-	/* set uart mode to disabled */
-    mov     r3, #7
-    strb    r3, [r0, #32]
-	/* 8N1, enable divisor latch */
     mvn     r3, #0x7c
     strb    r3, [r0, #12]
-	/* set divisor to 0 */
     mov     r3, #0
     strb    r3, [r0]
     strb    r3, [r0, #4]
-	/* 8N1, disable divisor latch */
     mov     r3, #3
     strb    r3, [r0, #12]
-    /* modem control? -- force RTS and DTR to low */
-	strb    r3, [r0, #16]
-	/* enable and clear FIFOs */
+    strb    r3, [r0, #16]
     mov     r3, #7
     strb    r3, [r0, #8]
-	/* 8N1, enable divisor latch */
     mvn     r3, #0x7c
     strb    r3, [r0, #12]
-	/* set divisor to the value of r1 */
     uxtb    r3, r1
     strb    r3, [r0]
     ubfx    r1, r1, #8, #8
     strb    r1, [r0, #4]
-	/* 8N1, disable divisor latch */
     mov     r3, #3
     strb    r3, [r0, #12]
-	/* set uart mode to 16x uart */
     mov     r3, #0
     strb    r3, [r0, #32]
 
