@@ -10,6 +10,7 @@ uart_lsr_txfifoe		= 5
 uart_thr				= 0x00
 uart_sysc				= 0x54
 uart_sysc_softreset		= 1
+uart_sysc_idlemode		= 3
 uart_syss				= 0x58
 uart_syss_resetdone		= 0
 uart_dll				= 0x00
@@ -106,10 +107,14 @@ _start:
 	*/
 
     /* turn off smart idle */
+	ldr r0, =UART0_BASE
+	bl uart_disable_smart_idle
+	/*
     ldr r0, =UART0_SYSC
     ldr r1, [r0]
     orr r1, #(0x1 << 0x3)
     str r1, [r0]
+	*/
 
     /* initialize UART */
 	ldr r0, =UART0_BASE
@@ -276,4 +281,20 @@ enable_uart_clocks:
 	
 	bx lr
 	.unreq base
+	.unreq tmp
+
+
+.global uart_disable_smart_idle
+uart_disable_smart_idle:
+
+	uart_base	.req r0
+	tmp			.req r1
+
+	ldr tmp, [uart_base, uart_sysc]
+	bic tmp, tmp, (0x3 << uart_sysc_idlemode)
+	orr tmp, tmp, (0x1 << uart_sysc_idlemode)
+	str tmp, [uart_base, uart_sysc]
+
+	bx lr
+	.unreq uart_base
 	.unreq tmp
