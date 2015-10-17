@@ -163,6 +163,9 @@ uart_putc:
 	uart_base	.req r1
 	tmp			.req r2
 
+	/* Sanitize input */
+	and character, character, 0xff
+
 	/* Wait for transmit FIFO to be empty */
 wait_to_transmit:
 	ldr tmp, [uart_base, uart_lsr]
