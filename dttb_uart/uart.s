@@ -5,17 +5,28 @@
 Outputs alphabet over serial.
 */
 
-uart_lsr			= 0x14
-uart_lsr_txfifoe	= 5
-uart_thr			= 0x00
-uart_sysc			= 0x54
-uart_sysc_softreset	= 1
-uart_syss			= 0x58
-uart_syss_resetdone	= 0
-uart_dll			= 0x00
-uart_dlh			= 0x04
-uart_lcr			= 0x0c
-uart_mdr1			= 0x20
+uart_lsr				= 0x14
+uart_lsr_txfifoe		= 5
+uart_thr				= 0x00
+uart_sysc				= 0x54
+uart_sysc_softreset		= 1
+uart_syss				= 0x58
+uart_syss_resetdone		= 0
+uart_dll				= 0x00
+uart_dlh				= 0x04
+uart_lcr				= 0x0c
+uart_mdr1				= 0x20
+
+ctrl_base				= 0x44e10000
+ctrl_conf_uart0_rxd		= 0x970
+ctrl_conf_uart0_txd		= 0x974
+
+cm_wkup_base			= 0x44e00400
+cm_wkup_clkstctrl		= 0x000
+cm_wkup_uart0_clkctrl	= 0x4b4
+
+cm_per_base				= 0x44e00000
+cm_per_l4hs_clkstctrl	= 0x11c
 
 .equ CM_PER_GPIO1_CLKCTRL, 0x44e000AC
 .equ GPIO1_OE, 0x4804C134
@@ -56,6 +67,8 @@ _start:
     str r1, [r0]
 
     /* setup_clocks_for_console */
+	bl enable_uart_clocks
+	/*
     ldr r0, =CM_WKUP_CLKSTCTRL
     ldr r1, [r0]
     and r1, #~0x3
@@ -76,6 +89,7 @@ _start:
     and r1, #~0x3
     orr r1, #0x2
     str r1, [r0]
+	*/
 
     /* UART soft reset */
 	bl uart_soft_reset
@@ -234,4 +248,32 @@ uart_init:
 	
 	bx lr
 	.unreq uart_base
+	.unreq tmp
+
+
+.global enable_uart_clocks
+enable_uart_clocks:
+
+	base	.req r0
+	tmp		.req r1
+	
+	/* Enable clocks required for UART0 */
+	ldr base, =cm_wkup_base
+	ldr tmp, [base, cm_wkup_clkstctrl]
+	bic tmp, 0x3 /* clear CLKTRCTL bits */
+	orr tmp, 0x2 /* set CLKTRCTL to SW_WKUP */
+	str tmp, [base, cm_wkup_clkstctrl]
+	ldr base, =cm_per_base
+	ldr tmp, [base, cm_per_l4hs_clkstctrl]
+	bic tmp, 0x3 /* clear CLKTRCTL bits */
+	orr tmp, 0x2 /* set CLKTRCTL to SW_WKUP */
+	str tmp, [base, cm_per_l4hs_clkstctrl]
+	ldr base, =cm_wkup_base
+	ldr tmp, [base, cm_wkup_uart0_clkctrl]
+	bic tmp, 0x3 /* clear MODULEMODE bits */
+	orr tmp, 0x2 /* set MODULEMODE to ENABLE */
+	str tmp, [base, cm_wkup_uart0_clkctrl]
+	
+	bx lr
+	.unreq base
 	.unreq tmp
