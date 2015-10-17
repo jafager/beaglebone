@@ -45,24 +45,24 @@ _start:
     str r1, [r0, ctrl_conf_uart1_txd]
 
     /* setup_clocks_for_console */
-	@bl enable_uart_clocks
+	bl enable_uart_clocks
 	bl enable_uart1_clocks
 
     /* UART soft reset */
-	@ldr r0, =uart0_base
-	@bl uart_soft_reset
+	ldr r0, =uart0_base
+	bl uart_soft_reset
 	ldr r0, =uart1_base
 	bl uart_soft_reset
 
     /* turn off smart idle */
-	@ldr r0, =uart0_base
-	@bl uart_disable_smart_idle
+	ldr r0, =uart0_base
+	bl uart_disable_smart_idle
 	ldr r0, =uart1_base
 	bl uart_disable_smart_idle
 
     /* initialize UART */
-	@ldr r0, =uart0_base
-	@bl uart_init
+	ldr r0, =uart0_base
+	bl uart_init
 	ldr r0, =uart1_base
 	bl uart_init
 
@@ -70,19 +70,19 @@ _start:
 .loop:
     cmp     r0, #'Z'
     movgt   r0, #'A'
-    @ldr     r1, =uart0_base
-    @bl uart_putc
+    ldr     r1, =uart0_base
+    bl uart_putc
     ldr     r1, =uart1_base
     bl uart_putc
     mov     r3, r0
     ldr     r0, ='\r'
-    @ldr     r1, =uart0_base
-    @bl uart_putc
+    ldr     r1, =uart0_base
+    bl uart_putc
     ldr     r1, =uart1_base
     bl uart_putc
     ldr     r0, ='\n'
-    @ldr     r1, =uart0_base
-    @bl uart_putc
+    ldr     r1, =uart0_base
+    bl uart_putc
     ldr     r1, =uart1_base
     bl uart_putc
     mov     r0, r3
