@@ -37,12 +37,14 @@ uart0_base				= 0x44e09000
 _start:
 
     /* set uart mux config */
+	/*
     ldr r0, =CONF_UART0_RXD
     ldr r1, =(0x1<<4)|(0x1<<5)
     str r1, [r0]
     ldr r0, =CONF_UART0_TXD
     ldr r1, =0x0
     str r1, [r0]
+	*/
 
     /* setup_clocks_for_console */
 	bl enable_uart_clocks
