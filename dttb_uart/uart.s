@@ -29,35 +29,12 @@ cm_wkup_uart0_clkctrl	= 0x4b4
 cm_per_base				= 0x44e00000
 cm_per_l4hs_clkstctrl	= 0x11c
 
-.equ CM_PER_GPIO1_CLKCTRL, 0x44e000AC
-.equ GPIO1_OE, 0x4804C134
-.equ GPIO1_SETDATAOUT, 0x4804C194
+uart0_base				= 0x44e09000
+
 .equ CONF_UART0_RXD, 0x44E10970
 .equ CONF_UART0_TXD, 0x44E10974
-.equ CM_WKUP_CLKSTCTRL, 0x44E00400
-.equ CM_PER_L4HS_CLKSTCTRL, 0x44E0011C
-.equ CM_WKUP_UART0_CLKCTRL, 0x44E004B4
-.equ CM_PER_UART0_CLKCTRL, 0x44E0006C
-.equ UART0_SYSC, 0x44E09054
-.equ UART0_SYSS, 0x44E09058
-.equ UART0_BASE, 0x44E09000
 
 _start:
-    /* set clock for GPIO1, TRM 8.1.12.1.29 */
-    ldr r0, =CM_PER_GPIO1_CLKCTRL
-    ldr r1, =0x40002
-    str r1, [r0]
-
-    /* set pin 21 for output, led USR0, TRM 25.3.4.3 */
-    ldr r0, =GPIO1_OE
-    ldr r1, [r0]
-    bic r1, r1, #(7<<21)
-    str r1, [r0]
-
-    /* logical 1 turns on the led, TRM 25.3.4.2.2.2 */
-    ldr r0, =GPIO1_SETDATAOUT
-    ldr r1, =(1<<21)
-    str r1, [r0]
 
     /* set uart mux config */
     ldr r0, =CONF_UART0_RXD
@@ -74,19 +51,14 @@ _start:
 	bl uart_soft_reset
 
     /* turn off smart idle */
-	ldr r0, =UART0_BASE
+	ldr r0, =uart0_base
 	bl uart_disable_smart_idle
 
     /* initialize UART */
-	ldr r0, =UART0_BASE
+	ldr r0, =uart0_base
 	bl uart_init
 
-    /* turn on second led */
-    ldr r2, =GPIO1_SETDATAOUT
-    ldr r1, =(1<<22)
-    str r1, [r2]
-
-    ldr     r1, =UART0_BASE
+    ldr     r1, =uart0_base
     ldr     r0, ='A'
 .loop:
     cmp     r0, #'Z'
@@ -134,7 +106,7 @@ uart_soft_reset:
 	tmp			.req r1
 
 	/* Initiate soft reset */
-	ldr uart_base, =UART0_BASE
+	ldr uart_base, =uart0_base
 	mov tmp, (1 << uart_sysc_softreset)
 	str tmp, [uart_base, uart_sysc]
 
