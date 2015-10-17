@@ -1,6 +1,17 @@
+.syntax unified
+
+
 /*
 Outputs alphabet over serial.
 */
+
+uart_lsr			= 0x14
+uart_lsr_txfifoe	= 5
+uart_thr			= 0x00
+uart_sysc			= 0x54
+uart_sysc_softreset	= 1
+uart_syss			= 0x58
+uart_syss_resetdone	= 0
 
 .equ CM_PER_GPIO1_CLKCTRL, 0x44e000AC
 .equ GPIO1_OE, 0x4804C134
@@ -63,6 +74,8 @@ _start:
     str r1, [r0]
 
     /* UART soft reset */
+	bl uart_soft_reset
+	/*
     ldr r0, =UART0_SYSC
     ldr r1, [r0]
     orr r1, #0x2
@@ -72,6 +85,8 @@ _start:
     ldr r1, [r0]
     ands r1, #0x1
     beq .uart_soft_reset
+	*/
+
     /* turn off smart idle */
     ldr r0, =UART0_SYSC
     ldr r1, [r0]
@@ -121,12 +136,12 @@ _start:
 .loop:
     cmp     r0, #'Z'
     movgt   r0, #'A'
-    bl .uart_putc
+    bl uart_putc
     mov     r3, r0
     ldr     r0, ='\r'
-    bl .uart_putc
+    bl uart_putc
     ldr     r0, ='\n'
-    bl .uart_putc
+    bl uart_putc
     mov     r0, r3
     add     r0, #1
     b .loop
@@ -138,3 +153,47 @@ _start:
     beq     .uart_putc
     strb    r0, [r1]
     bx      lr
+
+
+
+.global uart_putc
+uart_putc:
+
+	character	.req r0
+	uart_base	.req r1
+	tmp			.req r2
+
+	/* Wait for transmit FIFO to be empty */
+wait_to_transmit:
+	ldr tmp, [uart_base, uart_lsr]
+	tst tmp, (1 << uart_lsr_txfifoe)
+	beq wait_to_transmit
+
+	/* Put character in transmit FIFO */
+	str character, [uart_base, uart_thr]
+
+	bx lr
+	.unreq character
+	.unreq uart_base
+	.unreq tmp
+
+
+.global uart_soft_reset
+uart_soft_reset:
+
+	uart_base	.req r0
+	tmp			.req r1
+
+	/* Initiate soft reset */
+	ldr uart_base, =UART0_BASE
+	mov tmp, (1 << uart_sysc_softreset)
+	str tmp, [uart_base, uart_sysc]
+
+	/* Wait for soft reset to complete */
+wait_for_reset:
+	ldr tmp, [uart_base, uart_syss]
+	tst tmp, (1 << uart_syss_resetdone)
+
+	bx lr
+	.unreq uart_base
+	.unreq tmp
