@@ -12,6 +12,10 @@ uart_sysc			= 0x54
 uart_sysc_softreset	= 1
 uart_syss			= 0x58
 uart_syss_resetdone	= 0
+uart_dll			= 0x00
+uart_dlh			= 0x04
+uart_lcr			= 0x0c
+uart_mdr1			= 0x20
 
 .equ CM_PER_GPIO1_CLKCTRL, 0x44e000AC
 .equ GPIO1_OE, 0x4804C134
@@ -94,6 +98,9 @@ _start:
     str r1, [r0]
 
     /* initialize UART */
+	ldr r0, =UART0_BASE
+	bl uart_init
+	/*
     ldr r0, =UART0_BASE
     ldr r1, =26
 .uart_init:
@@ -125,6 +132,7 @@ _start:
     strb    r3, [r0, #12]
     mov     r3, #0
     strb    r3, [r0, #32]
+	*/
 
     /* turn on second led */
     ldr r2, =GPIO1_SETDATAOUT
@@ -197,6 +205,33 @@ wait_for_reset:
 	ldr tmp, [uart_base, uart_syss]
 	tst tmp, (1 << uart_syss_resetdone)
 
+	bx lr
+	.unreq uart_base
+	.unreq tmp
+
+
+.global uart_init
+uart_init:
+
+	uart_base	.req r0
+	tmp			.req r1
+	
+	/* Set the divisor */
+	mov tmp, 0xbf /* to access the uart_dll and uart_dlh registers */
+	str tmp, [uart_base, uart_lcr]
+	mov tmp, 0x1a /* 115,200 baud, low byte */
+	str tmp, [uart_base, uart_dll]
+	mov tmp, 0x00 /* 115,200 baud, high byte */
+	str tmp, [uart_base, uart_dlh]
+	
+	/* Set frame formatting */
+	mov tmp, 0x03 /* 8N1 */
+	str tmp, [uart_base, uart_lcr]
+	
+	/* Set UART mode */
+	mov tmp, 0 /* 16x UART */
+	str tmp, [uart_base, uart_mdr1]
+	
 	bx lr
 	.unreq uart_base
 	.unreq tmp
