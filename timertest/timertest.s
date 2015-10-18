@@ -26,10 +26,37 @@ timertest:
 	bl led_init
 
 
-	/* Set a distinctive pattern on the LEDs */
+	/* Output a test pattern on the LEDs */
 
-	mov r0, 0b1101
+	mov r0, 0b1111
 	bl led_set
+
+
+	/* Initialize the console */
+
+	bl console_init
+
+
+	/* Output a test pattern to the console */
+
+	mov r0, 'A'
+next_test_character:
+	bl console_putc
+	cmp r0, 'Z'
+	beq end_of_test_pattern
+	add r0, r0, 1
+	b next_test_character
+end_of_test_pattern:
+	mov r0, '\r'
+	bl console_putc
+	mov r0, '\n'
+	bl console_putc
+
+
+	/* Output a message to the console */
+
+	ldr r0, =ready_message
+	bl console_puts
 
 
 	/* Infinite loop, for safety */
@@ -37,3 +64,8 @@ timertest:
 hang:
 
 	b hang
+
+
+ready_message:
+
+	.asciz "Ready.\r\n"
