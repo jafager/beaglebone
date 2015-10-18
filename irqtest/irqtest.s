@@ -1,9 +1,6 @@
 .syntax unified
 
 
-interrupt_vector_table	= 0x
-
-
 .text
 
 
