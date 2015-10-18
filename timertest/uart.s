@@ -106,7 +106,9 @@ next_character:
 	ldrb character, [string]
 	cmp character, 0
 	beq end_of_string
+	push {r2}
 	bl uart_putc
+	pop {r2}
 	add string, string, 1
 	b next_character
 
