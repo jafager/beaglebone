@@ -74,10 +74,6 @@ irqtest:
 	bl intc_enable_interrupt
 
 
-	/* Enable processor interrupts */
-	cpsie i
-
-	
 	/* Set up the interrupt vector table */
 
 	ldr r0, =interrupt_vector_table
@@ -99,6 +95,10 @@ irqtest:
 	str r1, [r0, 0x1c]
 
 
+	/* Enable processor interrupts */
+	cpsie i
+
+	
 .pool
 
 
