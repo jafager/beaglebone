@@ -83,3 +83,16 @@ console_putc:
 	bl uart_putc
 
 	pop {pc}
+
+
+/* console_enable_rhr_interrupt: enable the RHR interrupt for UART0 */
+
+.global console_enable_rhr_interrupt
+console_enable_rhr_interrupt:
+
+	push {lr}
+
+	ldr r0, =uart0_base
+	bl uart_enable_rhr_interrupt
+
+	pop {pc}

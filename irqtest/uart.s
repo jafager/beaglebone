@@ -13,6 +13,8 @@ uart_dll				= 0x00
 uart_dlh				= 0x04
 uart_lcr				= 0x0c
 uart_mdr1				= 0x20
+uart_ier				= 0x04
+uart_ier_rhrit			= 0
 
 
 .text
@@ -116,4 +118,22 @@ end_of_string:
 
 	pop {pc}
 	.unreq character
+	.unreq uart_base
 	.unreq string
+
+
+/* uart_enable_rhr_interrupt: enable the RHR interrupt */
+
+.global uart_enable_rhr_interrupt
+uart_enable_rhr_interrupt:
+
+	uart_base	.req r0
+	tmp			.req r1
+
+	ldr tmp, [uart_base, uart_ier]
+	orr tmp, tmp, (1 << uart_ier_rhrit)
+	str tmp, [uart_base, uart_ier]
+
+	bx lr
+	.unreq uart_base
+	.unreq tmp

@@ -58,17 +58,27 @@ irqtest:
 	bl intc_init
 
 
+	/* Enable console recieve interrupt */
+
+	bl console_enable_rhr_interrupt
+
+
 	/* Configure and enable interrupts in the interrupt controller */
 
-	mov r0, 68 /* TINT2: DMTIMER2 interrupt */
-	mov r1, 0 /* highest priority */
-	mov r2, 0 /* IRQ, not FIQ */
-	bl intc_enable_interrupt
+	@@@ disabled for now as we have no code to determine which interrupt was triggered
+	@mov r0, 68 /* TINT2: DMTIMER2 interrupt */
+	@mov r1, 0 /* highest priority */
+	@mov r2, 0 /* IRQ, not FIQ */
+	@bl intc_enable_interrupt
 
 	mov r0, 72 /* UART0INT: UART0 interrupt */
 	mov r1, 0 /* highest priority */
 	mov r2, 0 /* IRQ, not FIQ */
 	bl intc_enable_interrupt
+
+
+	/* Enable processor interrupts */
+	cpsie i
 
 	
 	/* Set up the interrupt vector table */
