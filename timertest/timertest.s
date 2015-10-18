@@ -66,11 +66,17 @@ end_of_test_pattern:
 	bl console_puts
 
 
-	/* Infinite loop, for safety */
+	/* Sleep, print a message, repeat */
 
-hang:
+repeat:
 
-	b hang
+	ldr r0, =0x10000
+	bl timer_sleep
+
+	ldr r0, =message_sleep_completed
+	bl console_puts
+
+	b repeat
 
 
 message_ready:
@@ -78,3 +84,6 @@ message_ready:
 
 message_timer_initialized:
 	.asciz "Timer initialized.\r\n"
+
+message_sleep_completed:
+	.asciz "Sleep completed.\r\n"
