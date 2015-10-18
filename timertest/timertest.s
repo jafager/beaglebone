@@ -55,7 +55,14 @@ end_of_test_pattern:
 
 	/* Output a message to the console */
 
-	ldr r0, =ready_message
+	ldr r0, =message_ready
+	bl console_puts
+
+	
+	/* Initialize the timer */
+
+	bl timer_init
+	ldr r0, =message_timer_initialized
 	bl console_puts
 
 
@@ -66,6 +73,8 @@ hang:
 	b hang
 
 
-ready_message:
-
+message_ready:
 	.asciz "Ready.\r\n"
+
+message_timer_initialized:
+	.asciz "Timer initialized.\r\n"
