@@ -7,7 +7,9 @@ SECTIONS
 {
 	.text : { *(.text*) } > sram
 	. = . + 0x1000;
-	stack_init = .;
+	stack_supervisor = .;
+	. = . + 0x1000;
+	stack_irq = .;
 	interrupt_vector_table = .;
 	. = . + 0x20;
 }

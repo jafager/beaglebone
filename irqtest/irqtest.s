@@ -8,17 +8,37 @@
 irqtest:
 
 
-	/* Set up the processor to run the rest of our code */
+	/* Disable IRQ and FIQ interrupts */
 
 	mrs r0, cpsr
-	bic r0, r0, 0x1f /* clear mode bits */
-	orr r0, r0, 0xd3 /* disable IRQ and FIQ interrupts and set Supervisor mode */
+	orr r0, r0, 0xc0
 	msr cpsr, r0
 
 
-	/* Set up the stack, which is used in some of our subroutines */
+	/* Switch to IRQ mode */
 
-	ldr sp, =stack_init
+	mrs r0, cpsr
+	bic r0, r0, 0x1f
+	orr r0, r0, 0x12
+	msr cpsr, r0
+
+
+	/* Set up the IRQ mode stack */
+
+	ldr sp, =stack_irq
+
+
+	/* Switch to Supervisor mode */
+
+	mrs r0, cpsr
+	bic r0, r0, 0x1f
+	orr r0, r0, 0x13
+	msr cpsr, r0
+
+	
+	/* Set up the Supervisor mode stack */
+
+	ldr sp, =stack_supervisor
 
 
 	/* Initialize the LEDs */
@@ -50,110 +70,98 @@ irqtest:
 	bl console_puts
 
 
-	/* Initialize interrupt controller */
+	/* Enable UART0 RHR interrupt */
 
-	bl intc_init
-
-
-	/* Enable console recieve interrupt */
-
-	bl console_enable_rhr_interrupt
-
-
-	/* Configure and enable interrupts in the interrupt controller */
-
-	@@@ disabled for now as we have no code to determine which interrupt was triggered
-	@mov r0, 68 /* TINT2: DMTIMER2 interrupt */
-	@mov r1, 0 /* highest priority */
-	@mov r2, 0 /* IRQ, not FIQ */
-	@bl intc_enable_interrupt
-
-	mov r0, 72 /* UART0INT: UART0 interrupt */
-	mov r1, 0 /* highest priority */
-	mov r2, 0 /* IRQ, not FIQ */
-	bl intc_enable_interrupt
-
-
-	/* Set up the interrupt vector table */
-
-	ldr r0, =interrupt_vector_table
-	ldr r1, =reset_handler
-	str r1, [r0, 0x00]
-	ldr r1, =undefined_instruction_handler
+	ldr r0, =0x44e09000
+	ldr r1, [r0, 0x04]
+	orr r1, r1, (1 << 0)
 	str r1, [r0, 0x04]
-	ldr r1, =supervisor_call_handler
-	str r1, [r0, 0x08]
-	ldr r1, =prefetch_abort_handler
-	str r1, [r0, 0x0c]
-	ldr r1, =data_abort_handler
-	str r1, [r0, 0x10]
-	ldr r1, =unused_exception_handler
-	str r1, [r0, 0x14]
-	ldr r1, =irq_handler
-	str r1, [r0, 0x18]
-	ldr r1, =fiq_handler
-	str r1, [r0, 0x1c]
+
+	ldr r0, =message_enable_rhr
+	bl console_puts
 
 
-	/* Enable processor interrupts */
+	/* Enable UART0 interrupt in the INTC */
+
+	ldr r0, =0x48200000
+	ldr r1, =(1 << 8)
+	str r1, [r0, 0xc8]
+
+	ldr r0, =message_enable_uart0
+	bl console_puts
+
+
+	/* Set up interrupt vector table */
+
+	ldr r0, =vector_table
+	mcr p15, 0, r0, c12, c0, 0
+
+	ldr r0, =message_set_up_vector_table
+	bl console_puts
+
+
+	/* Enable interrupts */
+
 	cpsie i
 
-	
-.pool
-
-
-/* Hang the processor safely */
-
-hang:
-
-	b hang
-
-
-/* Interrupt handlers */
-
-reset_handler:
-	mov r0, 0b0001
-	bl led_write
-	b hang
-
-undefined_instruction_handler:
-	mov r0, 0b0010
-	bl led_write
-	b hang
-
-supervisor_call_handler:
-	mov r0, 0b0011
-	bl led_write
-	b hang
-
-prefetch_abort_handler:
-	mov r0, 0b0100
-	bl led_write
-	b hang
-
-data_abort_handler:
-	mov r0, 0b0101
-	bl led_write
-	b hang
-
-unused_exception_handler:
-	mov r0, 0b0110
-	bl led_write
-	b hang
-
-irq_handler:
-	push {r0-r3, lr}
-	mov r0, 0b0111
-	bl led_write
-	ldr r0, =message_irq_triggered
+	ldr r0, =message_enable_interrupts
 	bl console_puts
-	pop {r0-r3, lr}
-	sub pc, lr, 4
 
-fiq_handler:
-	mov r0, 0b1000
-	bl led_write
-	b hang
+
+	/* Main loop */
+
+main_loop:
+
+	wfe
+	b main_loop
+
+
+	/* Test pattern */
+	/*
+	mov r0, 'A'
+next_character:
+	bl console_putc
+	cmp r0, 'Z'
+	addne r0, r0, 1
+	bne next_character
+	mov r0, 'A'
+	b next_character
+	*/
+
+
+	/* Interrupt handler */
+
+interrupt_handler:
+
+	push {r0-r4, lr}
+
+	ldr r0, =message_interrupt
+	bl console_puts
+
+	ldr r0, =0x44e09000
+	ldr r1, [r0, 0x00]
+
+	ldr r0, =0x48200000
+	mov r1, 1
+	str r1, [r0, 0x48]
+
+	dsb
+	pop {r0-r4, lr}
+	subs pc, lr, 4
+
+
+vector_table:
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+	ldr pc, =interrupt_handler
+
+
+.pool
 
 
 /* Messages */
@@ -164,5 +172,17 @@ message_ready:
 message_timer_initialized:
 	.asciz "Timer initialized.\r\n"
 
-message_irq_triggered:
-	.asciz "IRQ interrupt triggered!\r\n"
+message_interrupt:
+	.asciz "Executing interrupt!\r\n"
+
+message_enable_rhr:
+	.asciz "RHR interrupt enabled.\r\n"
+
+message_enable_uart0:
+	.asciz "UART0 interrupt enabled.\r\n"
+
+message_set_up_vector_table:
+	.asciz "Set up interrupt vector table.\r\n"
+
+message_enable_interrupts:
+	.asciz "Interrupts enabled! Hold onto your butts...\r\n"

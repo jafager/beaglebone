@@ -96,3 +96,16 @@ console_enable_rhr_interrupt:
 	bl uart_enable_rhr_interrupt
 
 	pop {pc}
+
+
+/* console_getc: get a character from the console and return it in r0 */
+
+.global console_getc
+console_getc:
+
+	push {lr}
+
+	ldr r0, =uart0_base
+	bl uart_getc
+
+	pop {pc}

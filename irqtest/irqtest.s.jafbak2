@@ -1,0 +1,179 @@
+.syntax unified
+
+
+.text
+
+
+.global irqtest
+irqtest:
+
+
+	/* Set up the processor to run the rest of our code */
+
+	mrs r0, cpsr
+	bic r0, r0, 0x1f /* clear mode bits */
+	orr r0, r0, 0xd3 /* disable IRQ and FIQ interrupts and set Supervisor mode */
+	msr cpsr, r0
+
+
+	/* Set up the stack, which is used in some of our subroutines */
+
+	ldr sp, =stack_init
+
+
+	/* Initialize the LEDs */
+
+	bl led_init
+
+
+	/* Output a test pattern on the LEDs */
+
+	mov r0, 0b1111
+	bl led_set
+
+
+	/* Initialize the console */
+
+	bl console_init
+
+
+	/* Output a message to the console */
+
+	ldr r0, =message_ready
+	bl console_puts
+
+	
+	/* Initialize the timer */
+
+	bl timer_init
+	ldr r0, =message_timer_initialized
+	bl console_puts
+
+
+	/* Initialize interrupt controller */
+
+	bl intc_init
+
+
+	/* Echo characters */
+echo:
+	bl console_getc
+	bl console_putc
+	b echo
+
+
+	/* Enable console recieve interrupt */
+
+	@bl console_enable_rhr_interrupt
+
+
+	/* Configure and enable interrupts in the interrupt controller */
+
+	@ldr r0, =0x4820000
+	@mov r1, (1 << 8)
+	@str r1, [r0, 0xc8]
+
+	@@@ disabled for now as we have no code to determine which interrupt was triggered
+	@mov r0, 68 /* TINT2: DMTIMER2 interrupt */
+	@mov r1, 0 /* highest priority */
+	@mov r2, 0 /* IRQ, not FIQ */
+	@bl intc_enable_interrupt
+
+	@mov r0, 72 /* UART0INT: UART0 interrupt */
+	@mov r1, 0 /* highest priority */
+	@mov r2, 0 /* IRQ, not FIQ */
+	@bl intc_enable_interrupt
+
+
+	/* Set up the interrupt vector table */
+
+	ldr r0, =interrupt_vector_table
+	ldr r1, =reset_handler
+	str r1, [r0, 0x00]
+	ldr r1, =undefined_instruction_handler
+	str r1, [r0, 0x04]
+	ldr r1, =supervisor_call_handler
+	str r1, [r0, 0x08]
+	ldr r1, =prefetch_abort_handler
+	str r1, [r0, 0x0c]
+	ldr r1, =data_abort_handler
+	str r1, [r0, 0x10]
+	ldr r1, =unused_exception_handler
+	str r1, [r0, 0x14]
+	ldr r1, =irq_handler
+	str r1, [r0, 0x18]
+	ldr r1, =fiq_handler
+	str r1, [r0, 0x1c]
+
+
+	/* Enable processor interrupts */
+	@cpsie i
+
+	
+.pool
+
+
+/* Hang the processor safely */
+
+hang:
+
+	b hang
+
+
+/* Interrupt handlers */
+
+reset_handler:
+	mov r0, 0b0001
+	bl led_write
+	b hang
+
+undefined_instruction_handler:
+	mov r0, 0b0010
+	bl led_write
+	b hang
+
+supervisor_call_handler:
+	mov r0, 0b0011
+	bl led_write
+	b hang
+
+prefetch_abort_handler:
+	mov r0, 0b0100
+	bl led_write
+	b hang
+
+data_abort_handler:
+	mov r0, 0b0101
+	bl led_write
+	b hang
+
+unused_exception_handler:
+	mov r0, 0b0110
+	bl led_write
+	b hang
+
+irq_handler:
+	push {r0-r3, lr}
+	mov r0, 0b0111
+	bl led_write
+	ldr r0, =message_irq_triggered
+	bl console_puts
+	pop {r0-r3, lr}
+	sub pc, lr, 4
+
+fiq_handler:
+	mov r0, 0b1000
+	bl led_write
+	b hang
+
+
+/* Messages */
+
+message_ready:
+	.asciz "Console initialized.\r\n"
+
+message_timer_initialized:
+	.asciz "Timer initialized.\r\n"
+
+message_irq_triggered:
+	.asciz "IRQ interrupt triggered!\r\n"

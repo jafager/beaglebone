@@ -3,6 +3,7 @@
 
 uart_lsr				= 0x14
 uart_lsr_txfifoe		= 5
+uart_lsr_rxfifoe		= 0
 uart_thr				= 0x00
 uart_sysc				= 0x54
 uart_sysc_softreset		= 1
@@ -133,6 +134,28 @@ uart_enable_rhr_interrupt:
 	ldr tmp, [uart_base, uart_ier]
 	orr tmp, tmp, (1 << uart_ier_rhrit)
 	str tmp, [uart_base, uart_ier]
+
+	bx lr
+	.unreq uart_base
+	.unreq tmp
+
+
+/* uart_getc: get a character from the UART at address r0 and return it in r0 */
+
+.global uart_getc
+uart_getc:
+
+	uart_base	.req r0
+	tmp			.req r1
+
+wait_for_character:
+
+	ldr tmp, [uart_base, uart_lsr]
+	tst tmp, (1 << uart_lsr_rxfifoe)
+	beq wait_for_character
+
+	ldrb tmp, [uart_base, uart_thr]
+	mov r0, tmp
 
 	bx lr
 	.unreq uart_base
