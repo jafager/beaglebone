@@ -19,6 +19,11 @@ wait_for_enable:
 	cmp r1, 0x2
 	bne wait_for_enable
 
+	ldr r0, =message_clocks_enabled
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* configure pll */
 
@@ -53,6 +58,11 @@ wait_for_lock:
 	tst r1, 0x1
 	beq wait_for_lock
 
+	ldr r0, =message_pll_locked
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* configure cmd control registers */
 
@@ -72,6 +82,11 @@ wait_for_lock:
 	str r1, [r0, 0x2c]
 	str r1, [r0, 0x60]
 	str r1, [r0, 0x94]
+
+	ldr r0, =message_cmd_regs
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
 
 
 	/* configure data registers */
@@ -104,6 +119,11 @@ wait_for_lock:
 	str r1, [r0, 0x120]
 	str r1, [r0, 0x1c4]
 
+	ldr r0, =message_data_regs
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* configure io ctrl registers */
 
@@ -116,6 +136,11 @@ wait_for_lock:
 	str r1, [r0, 0x44]
 	str r1, [r0, 0x48]
 
+	ldr r0, =message_io_ctrl_regs
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* configure phy */
 
@@ -125,12 +150,22 @@ wait_for_lock:
 	str r1, [r0, 0xe4]
 	str r1, [r0, 0xe8]
 
+	ldr r0, =message_phy
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* set cke to be controlled by emif/ddr phy */
 
 	ldr r0, =0x44e1131c
 	mov r1, 0x1
 	str r1, [r0]
+
+	ldr r0, =message_cke
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
 
 
 	/* set sdram timings */
@@ -148,6 +183,11 @@ wait_for_lock:
 	str r1, [r0, 0x28]
 	str r1, [r0, 0x2c]
 
+	ldr r0, =message_timings
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 
 	/* configure sdram */
 
@@ -156,21 +196,46 @@ wait_for_lock:
 	ldr r1, =0x00002800
 	str r1, [r0, 0x10]
 
+	push {r0-r3}
+	ldr r0, =message_sdram
+	bl console_puts
+	pop {r0-r3}
+
 	ldr r1, =0x50074b34
 	str r1, [r0, 0xc8]
+
+	push {r0-r3}
+	ldr r0, =message_sdram
+	bl console_puts
+	pop {r0-r3}
 
 	ldr r1, =0x61c05332
 	str r1, [r0, 0x110]
 	str r1, [r0, 0x008]
 
+	push {r0-r3}
+	ldr r0, =message_sdram
+	bl console_puts
+	pop {r0-r3}
+
 	ldr r1, =0x00000c30
 	str r1, [r0, 0x10]
 	str r1, [r0, 0x14]
-	str r1, [r0, 0x10]
-	str r1, [r0, 0x14]
+	@str r1, [r0, 0x10]
+	@str r1, [r0, 0x14]
+
+	push {r0-r3}
+	ldr r0, =message_sdram
+	bl console_puts
+	pop {r0-r3}
 
 	ldr r1, =0x61c05332
 	str r1, [r0, 0x08]
+
+	push {r0-r3}
+	ldr r0, =message_sdram
+	bl console_puts
+	pop {r0-r3}
 
 	
 	/* configure vtp */
@@ -191,4 +256,30 @@ wait_for_ready:
 	tst r1, (1 << 5)
 	beq wait_for_ready
 
+	ldr r0, =message_vtp
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
 	bx lr
+
+message_clocks_enabled:
+	.asciz "Clocks enabled.\r\n"
+message_pll_locked:
+	.asciz "PLL locked.\r\n"
+message_cmd_regs:
+	.asciz "Command registers.\r\n"
+message_data_regs:
+	.asciz "Data registers.\r\n"
+message_io_ctrl_regs:
+	.asciz "IO ctrl registers.\r\n"
+message_phy:
+	.asciz "PHY.\r\n"
+message_cke:
+	.asciz "CKE.\r\n"
+message_timings:
+	.asciz "SDRAM timings.\r\n"
+message_sdram:
+	.asciz "SDRAM.\r\n"
+message_vtp:
+	.asciz "VTP.\r\n"
