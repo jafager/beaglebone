@@ -21,20 +21,29 @@ printtest:
 
 	/* Print some values */
 
-	ldr r0, =0xdeadbeef
+	ldr r0, =1000
+	ldr r1, =10
+	bl divide
+	push {r1}
 	bl pretty_hexprint
-	ldr r0, =0xdeadbeef
-	bl pretty_binprint
+	pop {r0}
+	bl pretty_hexprint
 
-	ldr r0, =0xfeedabba
+	ldr r0, =2000
+	ldr r1, =10
+	bl divide
+	push {r1}
 	bl pretty_hexprint
-	ldr r0, =0xfeedabba
-	bl pretty_binprint
+	pop {r0}
+	bl pretty_hexprint
 
-	ldr r0, =0x01234567
+	ldr r0, =9999
+	ldr r1, =9
+	bl divide
+	push {r1}
 	bl pretty_hexprint
-	ldr r0, =0x01234567
-	bl pretty_binprint
+	pop {r0}
+	bl pretty_hexprint
 
 
 hang:
@@ -156,3 +165,81 @@ pretty_binprint:
 	pop {pc}
 
 
+.global decprint
+decprint:
+
+	value				.req r0
+	digit				.req r1
+	number_of_digits	.req r2
+
+	mov number_of_digits, 0
+
+calculate_next_digit:
+
+	push {r2, lr}
+	mov digit, 10
+	bl divide
+	pop {r2, lr}
+
+	push {digit}
+	add number_of_digits, number_of_digits, 1
+	cmp value, 0
+	bne calculate_next_digit
+
+print_next_digit:
+
+	pop {digit}
+	add digit, digit, '0'
+	push {r0-r3, lr}
+	mov r0, digit
+	bl console_putc
+	pop {r0-r3, lr}
+	cmp number_of_digits, 0
+	subne number_of_digits, number_of_digits, 1
+	bne print_next_digit
+
+	bx lr
+
+
+.global pretty_decprint
+pretty_decprint:
+
+	push {lr}
+
+	bl decprint
+
+	mov r0, '\r'
+	bl console_putc
+
+	mov r0, '\n'
+	bl console_putc
+
+	pop {pc}
+
+
+.global divide
+divide:
+
+	dividend	.req r0
+	divisor		.req r1
+	shift_width	.req r2
+	quotient	.req r3
+
+	mov quotient, 0
+	mov shift_width, 32
+
+next_round:
+
+	sub shift_width, shift_width, 1
+	cmp dividend, divisor, lsl shift_width
+	subhs dividend, dividend, divisor, lsl shift_width
+	mov quotient, quotient, lsl 1
+	orrhs quotient, quotient, 1
+
+	cmp shift_width, 0
+	bne next_round
+
+	mov r0, quotient
+	mov r1, dividend
+
+	bx lr
