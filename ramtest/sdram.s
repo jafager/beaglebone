@@ -8,6 +8,9 @@
 sdram_init:
 
 
+	push {lr}
+
+
 	/* enable clocks */
 
 	ldr r0, =0x44e00000
@@ -59,6 +62,34 @@ wait_for_lock:
 	beq wait_for_lock
 
 	ldr r0, =message_pll_locked
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
+
+	/* configure vtp */
+
+	ldr r0, =0x44e10000
+
+	ldr r1, [r0, 0xe0c]
+	orr r1, r1, (1 << 6)
+	str r1, [r0, 0xe0c]
+
+	ldr r1, [r0, 0xe0c]
+	bic r1, r1, (1 << 0)
+	str r1, [r0, 0xe0c]
+
+	ldr r1, [r0, 0xe0c]
+	orr r1, r1, (1 << 0)
+	str r1, [r0, 0xe0c]
+
+wait_for_ready:
+
+	ldr r1, [r0, 0xe0c]
+	tst r1, (1 << 5)
+	beq wait_for_ready
+
+	ldr r0, =message_vtp
 	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
@@ -130,11 +161,11 @@ wait_for_lock:
 	ldr r0, =0x44e11400
 
 	ldr r1, =0x18b
+	str r1, [r0, 0x04]
 	str r1, [r0, 0x08]
 	str r1, [r0, 0x0c]
-	str r1, [r0, 0x10]
+	str r1, [r0, 0x40]
 	str r1, [r0, 0x44]
-	str r1, [r0, 0x48]
 
 	ldr r0, =message_io_ctrl_regs
 	push {r0-r3}
@@ -191,95 +222,98 @@ wait_for_lock:
 
 	/* configure sdram */
 
-	ldr r0, =0x4c000000
+	ldr r0, =0x4c000010
+	ldr r1, =0x2800
+	str r1, [r0]
 
-	ldr r1, =0x00002800
-	str r1, [r0, 0x10]
-
-	push {r0-r3}
 	ldr r0, =message_sdram
+	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
 
-	ldr r1, =0x50074b34
-	str r1, [r0, 0xc8]
+	ldr r0, =0x4c0000c8
+	ldr r1, =0x50074be4
+	str r1, [r0]
 
-	push {r0-r3}
 	ldr r0, =message_sdram
+	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
 
+	ldr r0, =0x44e10110
 	ldr r1, =0x61c05332
-	str r1, [r0, 0x110]
-	str r1, [r0, 0x008]
+	str r1, [r0]
 
-	push {r0-r3}
 	ldr r0, =message_sdram
+	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
 
+	ldr r0, =0x4c000008
+	ldr r1, =0x61c05332
+	str r1, [r0]
+
+	ldr r0, =message_sdram
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
+	ldr r0, =0x4c000010
 	ldr r1, =0x00000c30
-	str r1, [r0, 0x10]
-	str r1, [r0, 0x14]
-	@str r1, [r0, 0x10]
-	@str r1, [r0, 0x14]
+	str r1, [r0]
 
-	push {r0-r3}
 	ldr r0, =message_sdram
+	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
 
+	ldr r0, =0x4c000014
+	ldr r1, =0x00000c30
+	str r1, [r0]
+
+	ldr r0, =message_sdram
+	push {r0-r3}
+	bl console_puts
+	pop {r0-r3}
+
+	ldr r0, =0x4c000008
 	ldr r1, =0x61c05332
-	str r1, [r0, 0x08]
-
-	push {r0-r3}
-	ldr r0, =message_sdram
-	bl console_puts
-	pop {r0-r3}
-
+	str r1, [r0]
 	
-	/* configure vtp */
-
-	ldr r0, =0x44e10000
-
-	ldr r1, [r0, 0xe0c]
-	orr r1, r1, (1 << 6)
-	str r1, [r0, 0xe0c]
-
-	ldr r1, [r0, 0xe0c]
-	bic r1, r1, 0x1
-	str r1, [r0, 0xe0c]
-
-wait_for_ready:
-
-	ldr r1, [r0, 0xe0c]
-	tst r1, (1 << 5)
-	beq wait_for_ready
-
-	ldr r0, =message_vtp
+	ldr r0, =message_sdram
 	push {r0-r3}
 	bl console_puts
 	pop {r0-r3}
 
-	bx lr
+	pop {pc}
+
 
 message_clocks_enabled:
 	.asciz "Clocks enabled.\r\n"
+
 message_pll_locked:
 	.asciz "PLL locked.\r\n"
+
 message_cmd_regs:
 	.asciz "Command registers.\r\n"
+
 message_data_regs:
 	.asciz "Data registers.\r\n"
+
 message_io_ctrl_regs:
 	.asciz "IO ctrl registers.\r\n"
+
 message_phy:
 	.asciz "PHY.\r\n"
+
 message_cke:
 	.asciz "CKE.\r\n"
+
 message_timings:
 	.asciz "SDRAM timings.\r\n"
+
 message_sdram:
 	.asciz "SDRAM.\r\n"
+
 message_vtp:
 	.asciz "VTP.\r\n"

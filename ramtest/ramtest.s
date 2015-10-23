@@ -15,12 +15,15 @@ ramtest:
 	ldr sp, =stack_supervisor
 
 	bl console_init
+
 	ldr r0, =message_console_initialized
 	bl console_puts
 
 	ldr r0, =message_initializing_sdram
 	bl console_puts
+
 	bl sdram_init
+
 	ldr r0, =message_sdram_initialized
 	bl console_puts
 
