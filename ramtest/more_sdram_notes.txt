@@ -1,0 +1,16 @@
+SDRAM_CONFIG 0x4c000008
+
+REG_SDRAM_TYPE = 3 (DDR3)
+REG_IBANK_POS = 0
+REG_DDR_TERM = ?
+REG_DDR2_DDQS = 1 (DDR2/DDR3)
+REG_DYN_ODT = ?
+REG_DDR_DISABLE_DLL = 0 (normal operation)
+REG_SDRAM_DRIVE = 0 (full drive)
+REG_CWL = 0 (5)
+REG_NARROW_MODE = 1 (16-bit mode)
+REG_CL = 5 (CAS latency)
+REG_ROWSIZE = 0? (unused)
+REG_IBANK = 3 (8 banks)
+REG_EBANK = 0 (1 CS line)
+REG_PAGESIZE = 2 (10 address bits, 1K word page, 2KB page
