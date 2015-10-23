@@ -15,7 +15,6 @@ sdram_init:
 
 	ldr r0, =0x44e00000
 	mov r1, 0x2
-	str r1, [r0, 0xd0]
 	str r1, [r0, 0x28]
 wait_for_enable:
 	ldr r1, [r0, 0x28]

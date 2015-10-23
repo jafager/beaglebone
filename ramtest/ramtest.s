@@ -27,12 +27,17 @@ ramtest:
 	ldr r0, =message_sdram_initialized
 	bl console_puts
 
+memtest:
+
+	ldr r0, =message_memtest
+	bl console_puts
+
 	ldr r0, =0x80000000
 next_address:
-	ldr r1, =0xffff
+	ldr r1, =0xff
 	and r1, r0, r1
-	str r1, [r0]
-	ldr r2, [r0]
+	strb r1, [r0]
+	ldrb r2, [r0]
 	cmp r1, r2
 	beq success
 	push {r0-r3}
@@ -40,7 +45,8 @@ next_address:
 	bl console_puts
 	pop {r0-r3}
 success:
-	ldr r2, =0xfffc
+	ldr r2, =0xfffff
+	and r1, r0, r2
 	cmp r1, r2
 	bne no_update
 	push {r0-r3}
@@ -48,14 +54,16 @@ success:
 	bl console_putc
 	pop {r0-r3}
 no_update:
-	ldr r1, =0x9ffffffc
+	ldr r1, =0x9fffffff
 	cmp r0, r1
 	beq done_memtest
-	add r0, r0, 4
+	add r0, r0, 1
 	b next_address
 done_memtest:
 	ldr r0, =message_memtest_complete
 	bl console_puts
+
+	b memtest
 
 
 hang:
@@ -71,6 +79,9 @@ message_initializing_sdram:
 
 message_sdram_initialized:
 	.asciz "SDRAM Initialized.\r\n"
+
+message_memtest:
+	.asciz "Initiating memory test.\r\n"
 
 message_memtest_fail:
 	.asciz "Memory test failed cell!\r\n"
