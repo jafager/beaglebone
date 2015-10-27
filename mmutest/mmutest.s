@@ -60,7 +60,7 @@ mmutest:
     ldr r0, =translation_table
     mov r1, 0
 next_entry:
-    ldr r2, =0x302
+    ldr r2, =0xc02
     orr r2, r2, r1, lsl 20
     str r2, [r0]
     add r0, r0, 4
@@ -112,6 +112,22 @@ next_entry:
 
     ldr r0, =message_ready
     bl console_puts
+
+
+    /* Dump translation table */
+
+    ldr r1, =translation_table
+    mov r2, 32
+
+next_tt_entry:
+
+    ldr r0, [r1]
+    push {r0-r3}
+    bl console_pretty_hexprint
+    pop {r0-r3}
+    add r1, r1, 4
+    subs r2, r2, 1
+    bne next_tt_entry
 
 
 hang:

@@ -10,6 +10,6 @@ SECTIONS
 	stack_abort = .;
 	. = . + 0x1000;
 	stack_supervisor = .;
-    translation_table = .;
-    . = . + 0x4000;
+    translation_table = ALIGN(0x4000);
+    . = translation_table + 0x4000;
 }
