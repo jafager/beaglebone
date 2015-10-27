@@ -62,7 +62,8 @@ mmutest:
 next_entry:
     ldr r2, =0x302
     orr r2, r2, r1, lsl 20
-    str r2, [r0, r1]
+    str r2, [r0]
+    add r0, r0, 4
     add r1, r1, 1
     ldr r2, =0x1000
     cmp r1, r2
@@ -79,6 +80,12 @@ next_entry:
 
     ldr r0, =message_console_initialized
     bl console_puts
+
+
+    /* Configure domain */
+
+    mov r0, 0x3
+    mcr p15, 0, r0, c3, c0, 0
 
 
     /* Enable MMU */
