@@ -105,12 +105,6 @@ mmc_init_wait_for_bus_power:
 
     ldr base, =mmchs0_base
     ldr tmp, [base, sd_hctl]
-
-    mov r0, tmp
-    bl console_pretty_hexprint
-
-    ldr base, =mmchs0_base
-    ldr tmp, [base, sd_hctl]
     tst tmp, sd_hctl_sdbp
     beq mmc_init_wait_for_bus_power
 
