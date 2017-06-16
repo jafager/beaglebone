@@ -21,6 +21,7 @@ sd_con                  = 0x12c
 sd_con_ceata            = (1 << 12)
 sd_con_dw8              = (1 << 5)
 sd_con_od               = (1 << 0)
+sd_con_init             = (1 << 1)
 
 sd_hctl                 = 0x228
 sd_hctl_sdvs_mask       = (0x7 << 9)
@@ -35,6 +36,11 @@ sd_sysctl_ics           = (1 << 1)
 sd_sysctl_clkd_mask     = (0x3ff << 6)
 sd_sysctl_clkd_1023     = (0x3ff << 6)
 
+sd_stat                 = 0x230
+sd_stat_cc              = (1 << 0)
+sd_stat_cto             = (1 << 16)
+
+sd_cmd                  = 0x20c
 
 .text
 
@@ -135,6 +141,9 @@ mmc_init_wait_for_clock_stable:
 
     pop {pc}
 
+    .unreq base
+    .unreq tmp
+
 
 
 message_waiting_for_bus_power:
@@ -168,9 +177,10 @@ mmc_identify_card:
     mov tmp, 0
     str tmp, [base, sd_cmd]
 
+    mov index, 1024
+
 mmc_identify_card_delay:
 
-    mov index, 1024
     ldr tmp, [base, sd_stat]
     subs index, index, 1
     bne mmc_identify_card_delay
@@ -188,15 +198,39 @@ mmc_identify_card_delay:
 
     /* Change clock frequency to fit protocol */
 
+    ldr r0, =message_waiting_for_bus_power
+    bl console_puts
+
     /* Send a CMD0 command */
 
-    mov tmp, 0x190000
+    ldr tmp, =0x01a0000
     str tmp, [base, sd_cmd]
 
-mmc_identify_card_get_response:
+    ldr r0, =message_waiting_for_bus_power
+    bl console_puts
 
-    ldr r0, [base, sd_rsp10]
-    bl console_pretty_hexprint
-    b mmc_identify_card_get_response
+    /* Send a CMD8 command */
 
+    ldr tmp, =0x81a0000
+    str tmp, [base, sd_cmd]
+
+mmc_identify_card_cmd8_wait:
+
+    ldr tmp, [base, sd_stat]
+    tst tmp, sd_stat_cc
+    bne mmc_identify_card_is_sd20
+    tst tmp, sd_stat_cto
+    beq mmc_identify_card_cmd8_wait
     pop {r4-r6,pc}
+
+mmc_identify_card_is_sd20:
+
+    ldr r0, =message_card_is_sd20
+    bl console_puts
+    pop {r4-r6,pc}
+
+
+
+message_card_is_sd20:
+
+    .asciz "Card is SD 2.0 compliant.\r\n"

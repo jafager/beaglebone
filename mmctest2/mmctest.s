@@ -148,6 +148,11 @@ next_entry:
     bl console_puts
 
 
+    /* Identify card */
+
+    bl mmc_identify_card
+
+
     /* Success! */
 
     ldr r0, =message_ready
