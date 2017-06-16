@@ -145,3 +145,58 @@ message_waiting_for_bus_power:
 message_waiting_for_clock_stable:
 
     .asciz "Waiting for internal clock to stabilize...\r\n"
+
+
+
+
+.global mmc_identify_card
+mmc_identify_card:
+
+    base    .req r4
+    tmp     .req r5
+    index   .req r6
+
+    push {r4-r6,lr}
+
+    /* Send an initialization stream */
+
+    ldr base, =mmchs0_base
+    ldr tmp, [base, sd_con]
+    orr tmp, tmp, sd_con_init
+    str tmp, [base, sd_con]
+
+    mov tmp, 0
+    str tmp, [base, sd_cmd]
+
+mmc_identify_card_delay:
+
+    mov index, 1024
+    ldr tmp, [base, sd_stat]
+    subs index, index, 1
+    bne mmc_identify_card_delay
+
+    ldr tmp, [base, sd_stat]
+    bic tmp, tmp, sd_stat_cc
+    str tmp, [base, sd_stat]
+
+    ldr tmp, [base, sd_con]
+    bic tmp, tmp, sd_con_init
+    str tmp, [base, sd_con]
+
+    mov tmp, -1
+    str tmp, [base, sd_stat]
+
+    /* Change clock frequency to fit protocol */
+
+    /* Send a CMD0 command */
+
+    mov tmp, 0x190000
+    str tmp, [base, sd_cmd]
+
+mmc_identify_card_get_response:
+
+    ldr r0, [base, sd_rsp10]
+    bl console_pretty_hexprint
+    b mmc_identify_card_get_response
+
+    pop {r4-r6,pc}
