@@ -139,6 +139,15 @@ next_entry:
     ldr r0, =message_data_and_l2_caches_enabled
     bl console_puts
 
+    
+    /* Wait for a keypress since we can't always have an SD card inserted and boot from the UART */
+
+    ldr r0, =message_insert_sd_card_and_press_a_key
+    bl console_puts
+    bl console_getc
+    ldr r0, =message_initializing_mmchs_controller
+    bl console_puts
+
 
     /* Initialize MMCHS controller */
 
@@ -309,3 +318,13 @@ message_data_and_l2_caches_enabled:
 message_mmchs_controller_initialized:
 
     .asciz "MMCHS controller initialized.\r\n"
+
+
+message_insert_sd_card_and_press_a_key:
+
+    .asciz "Insert SD card and press a key.\r\n"
+
+message_initializing_mmchs_controller:
+
+    .asciz "Initializing MMCHS controller...\r\n"
+

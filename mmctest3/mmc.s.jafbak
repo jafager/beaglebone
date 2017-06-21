@@ -52,11 +52,6 @@ sd_stat_erri            = (1 << 15)
 
 sd_cmd                  = 0x20c
 
-sd_ie                   = 0x234
-sd_ie_enable_all        = 0x337f07ff
-
-sd_arg                  = 0x208
-
 
 
 .text
@@ -66,8 +61,8 @@ sd_arg                  = 0x208
 .global mmc_init
 mmc_init:
 
-    base    .req r4
-    tmp     .req r5
+    base    .req r0
+    tmp     .req r1
 
     push {lr}
 
@@ -175,14 +170,6 @@ mmc_init_wait_for_clock_stable:
     ldr r0, =message_sending_initialization_stream
     bl console_puts
 
-    /* Enable internal interrupts */
-
-    ldr base, =mmchs0_base
-    ldr tmp, [base, sd_ie]
-    ldr r2, =sd_ie_enable_all
-    orr tmp, tmp, r2
-    str tmp, [base, sd_ie]
-
     /* Send an initialization stream */
 
     ldr base, =mmchs0_base
@@ -206,110 +193,18 @@ mmc_init_wait_for_cmd0:
     ldr base, =mmchs0_base
     ldr tmp, [base, sd_stat]
     tst tmp, sd_stat_cc
-    bne mmc_init_cmd0_complete
+    popne {pc}
     tst tmp, sd_stat_erri
     beq mmc_init_wait_for_cmd0
     mov r0, tmp
     bl console_pretty_hexprint
     b .
 
-mmc_init_cmd0_complete:
-
-    /* Clear command complete internal interrupt */
-
-    ldr tmp, [base, sd_stat]
-    bic tmp, tmp, sd_stat_cc
-    str tmp, [base, sd_stat]
-
-    /* End initialization stream */
-
-    ldr tmp, [base, sd_con]
-    bic tmp, tmp, sd_con_init
-    str tmp, [base, sd_con]
-
-    /* Clear all internal interrupts */
-
-    ldr tmp, =0xffffffff
-    str tmp, [base, sd_stat]
-
-    ldr r0, =message_done_mmc_init
-    bl console_puts
-
-    pop {pc}
+    /* We can probably skip idle mode configuration since we are not allowing it to idle? */
 
     .unreq base
     .unreq tmp
 
-
-
-
-
-.global mmc_identify_card
-mmc_identify_card:
-
-    base    .req r4
-    tmp     .req r5
-
-    push {r4-r5,lr}
-
-    /* TODO: Change clock frequency to fit protocol? */
-
-    /* Send CMD8 */
-
-    ldr r0, =message_sending_cmd8
-    bl console_puts
-
-    ldr base, =mmchs0_base
-    mov tmp, (1 << 8)
-    orr tmp, tmp, 0xaa
-    str tmp, [base, sd_arg]
-
-    ldr base, =mmchs0_base
-    ldr tmp, =0x81a0000
-    str tmp, [base, sd_cmd]
-
-    /* Wait for CMD8 to finish */
-
-mmc_identify_card_wait_for_cmd8:
-
-    ldr base, =mmchs0_base
-    ldr tmp, [base, sd_stat]
-    tst tmp, sd_stat_cc
-    bne mmc_identify_card_cmd8_complete
-    tst tmp, sd_stat_erri
-    beq mmc_identify_card_wait_for_cmd8
-    mov r0, tmp
-    bl console_pretty_hexprint
-    b .
-
-mmc_identify_card_cmd8_complete:
-
-    /* Clear command complete internal interrupt */
-
-    ldr base, =mmchs0_base
-    ldr tmp, [base, sd_stat]
-    bic tmp, tmp, sd_stat_cc
-    str tmp, [base, sd_stat]
-
-    ldr r0, =message_card_is_sd20
-    bl console_puts
-
-    pop {r4-r5,pc}
-
-    .unreq base
-    .unreq tmp
-
-message_card_is_sd20:
-
-    .asciz "Card is SD 2.0 compliant.\r\n"
-
-message_sending_cmd8:
-
-    .asciz "Sending CMD8...\r\n"
-
-message_done_mmc_init:
-
-    .asciz "Done with mmc_init.\r\n"
 
 
 message_waiting_for_bus_power:
@@ -331,3 +226,63 @@ message_sending_cmd0:
     .asciz "Sending CMD0...\r\n"
 
 
+
+
+.global mmc_identify_card
+mmc_identify_card:
+
+    base    .req r4
+    tmp     .req r5
+    index   .req r6
+
+    push {r4-r6,lr}
+
+    ldr tmp, [base, sd_stat]
+    bic tmp, tmp, sd_stat_cc
+    str tmp, [base, sd_stat]
+
+    ldr tmp, [base, sd_con]
+    bic tmp, tmp, sd_con_init
+    str tmp, [base, sd_con]
+
+    mov tmp, -1
+    str tmp, [base, sd_stat]
+
+    /* Change clock frequency to fit protocol */
+
+    ldr r0, =message_waiting_for_bus_power
+    bl console_puts
+
+    /* Send a CMD0 command */
+
+    ldr tmp, =0x01a0000
+    str tmp, [base, sd_cmd]
+
+    ldr r0, =message_waiting_for_bus_power
+    bl console_puts
+
+    /* Send a CMD8 command */
+
+    ldr tmp, =0x81a0000
+    str tmp, [base, sd_cmd]
+
+mmc_identify_card_cmd8_wait:
+
+    ldr tmp, [base, sd_stat]
+    tst tmp, sd_stat_cc
+    bne mmc_identify_card_is_sd20
+    tst tmp, sd_stat_cto
+    beq mmc_identify_card_cmd8_wait
+    pop {r4-r6,pc}
+
+mmc_identify_card_is_sd20:
+
+    ldr r0, =message_card_is_sd20
+    bl console_puts
+    pop {r4-r6,pc}
+
+
+
+message_card_is_sd20:
+
+    .asciz "Card is SD 2.0 compliant.\r\n"
