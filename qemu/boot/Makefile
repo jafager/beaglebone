@@ -11,7 +11,7 @@ boot.elf: linker.ld startup.o boot.o console.o uart.o
 	arm-none-eabi-as -o $@ $^
 
 clean:
-	rm -f *.bin *.elf *.o *.i
+	rm -f *.bin *.elf *.o
 
 run: boot.bin
 	qemu-system-arm -machine integratorcp -cpu cortex-a8 -m 128 -nographic -kernel boot.bin
