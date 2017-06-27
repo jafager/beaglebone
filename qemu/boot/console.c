@@ -18,6 +18,13 @@ void console_putc(uint8_t character)
 
 
 
+uint8_t console_getc(void)
+{
+    return uart_getc(CONSOLE);
+}
+
+
+
 void console_hexprint(uint32_t value)
 {
     uint32_t bits = 32;

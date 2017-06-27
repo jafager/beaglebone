@@ -13,6 +13,7 @@
 
 void console_puts(uint8_t *string);
 void console_putc(uint8_t character);
+uint8_t console_getc(void);
 void console_hexprint(uint32_t value);
 
 

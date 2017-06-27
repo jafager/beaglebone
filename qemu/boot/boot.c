@@ -52,5 +52,7 @@ void boot(void)
             console_putc((word >> 16) & 0xff);
             console_putc((word >> 24) & 0xff);
         }
+
+        uint8_t character = console_getc();
     }
 }
