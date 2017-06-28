@@ -94,6 +94,12 @@ startup:
 
 
 
+    /* Branch to second-stage kernel */
+
+    ldr pc, =0x04000000
+
+
+
     /* Hang the processor safely */
 
     b .
