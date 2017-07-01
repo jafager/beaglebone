@@ -1,0 +1,22 @@
+all: ctest.bin
+
+%.bin: %.elf
+	arm-none-eabi-objcopy $^ -O binary $@
+
+ctest.elf: linker.ld startup.o entry.o led.o
+	arm-none-eabi-ld -o $@ -T $^
+
+%.o: %.c
+	arm-none-eabi-gcc -Wall -c -o $@ $^
+
+%.o: %.s
+	arm-none-eabi-as -o $@ $^
+
+clean:
+	rm -f *.bin *.elf *.o
+
+dump: ctest.elf
+	arm-none-eabi-objdump -d $^ | more
+
+read: ctest.elf
+	arm-none-eabi-readelf -a $^ | more
