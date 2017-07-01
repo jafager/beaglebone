@@ -98,7 +98,7 @@ void boot(void)
     console_hexprint(regread32(MMC + MMC_MMCIResponse2));
     console_hexprint(regread32(MMC + MMC_MMCIResponse3));
     console_puts("\r\n");
-    uint32_t card_c_size = ((regread32(MMC + MMC_MMCIResponse1) >> 30) & 0b11) | ((regread32(MMC + MMC_MMCIResponse0) & 0b1111111111) << 2);
+    uint32_t card_c_size = ((regread32(MMC + MMC_MMCIResponse2) >> 30) & 0b11) | ((regread32(MMC + MMC_MMCIResponse1) & 0b1111111111) << 2);
     console_puts("c_size is: ");
     console_hexprint(card_c_size);
     console_puts("\r\n");

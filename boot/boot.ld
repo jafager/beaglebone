@@ -6,6 +6,7 @@ MEMORY
 SECTIONS
 {
     .text : { *(.text*) } > sram
+    .rodata : { *(.rodata*) } > sram
     .data : { *(.data*) } > sram
     bss_begin = .;
     .bss : { *(.bss*) } > sram

@@ -88,19 +88,49 @@ startup:
 
 
 
+    /* Initialize LEDs and set a test pattern */
+
+    bl led_init
+    mov r0, 0b0001
+    bl led_write
+
+
+
+    /* Initialize BSS section */
+
+    ldr r0, =bss_begin
+    ldr r1, =bss_end
+    mov r2, 0
+
+    initialize_bss_loop:
+        cmp r0, r1
+        beq initialize_bss_done
+        strb r2, [r0]
+        add r0, r0, 1
+        b initialize_bss_loop
+    initialize_bss_done:
+
+    mov r0, 0b0010
+    bl led_write
+    
+
+
     /* Branch to C entry point */
 
     bl boot
 
 
-
     /* Branch to second-stage kernel */
 
+/*
     ldr pc, =0x04000000
-
+*/
 
 
     /* Hang the processor safely */
+
+    mov r0, 0b1111
+    bl led_write
 
     b .
 
@@ -108,6 +138,8 @@ startup:
 
 handler_reset:
 
+    mov r0, 0b1000
+    bl led_write
     ldr r0, =0xdeadbee0
     b .
 
@@ -115,6 +147,8 @@ handler_reset:
 
 handler_undef:
 
+    mov r0, 0b1001
+    bl led_write
     ldr r0, =0xdeadbee1
     b .
 
@@ -122,6 +156,8 @@ handler_undef:
 
 handler_swi:
 
+    mov r0, 0b1010
+    bl led_write
     ldr r0, =0xdeadbee2
     b .
 
@@ -129,6 +165,8 @@ handler_swi:
 
 handler_pabt:
 
+    mov r0, 0b1011
+    bl led_write
     ldr r0, =0xdeadbee3
     b .
 
@@ -136,6 +174,8 @@ handler_pabt:
 
 handler_dabt:
 
+    mov r0, 0b1100
+    bl led_write
     ldr r0, =0xdeadbee4
     b .
 
@@ -143,6 +183,8 @@ handler_dabt:
 
 handler_irq:
 
+    mov r0, 0b1101
+    bl led_write
     ldr r0, =0xdeadbee5
     b .
 
@@ -150,6 +192,8 @@ handler_irq:
 
 handler_fiq:
 
+    mov r0, 0b1110
+    bl led_write
     ldr r0, =0xdeadbee6
     b .
 

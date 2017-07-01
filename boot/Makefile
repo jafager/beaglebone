@@ -10,7 +10,7 @@ kernel.elf: kernel.ld kernel.o console.o uart.o led.o reg.o
 	arm-none-eabi-ld -o $@ -T $^
 
 %.o: %.c
-	arm-none-eabi-gcc -c -o $@ $^
+	arm-none-eabi-gcc -Wall -c -o $@ $^
 
 %.o: %.s
 	arm-none-eabi-as -o $@ $^
@@ -22,4 +22,7 @@ clean:
 	rm -f *.bin *.elf *.o *.img
 
 dump: boot.elf
-	arm-none-eabi-objdump -d $^
+	arm-none-eabi-objdump -d $^ | more
+
+read: boot.elf
+	arm-none-eabi-readelf -a $^ | more

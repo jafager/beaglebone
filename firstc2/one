@@ -1,0 +1,74 @@
+
+../firstc/firstc.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+402f0400 <startup>:
+402f0400:	e10f0000 	mrs	r0, CPSR
+402f0404:	e3c0001f 	bic	r0, r0, #31
+402f0408:	e38000d3 	orr	r0, r0, #211	; 0xd3
+402f040c:	e129f000 	msr	CPSR_fc, r0
+402f0410:	e59fd008 	ldr	sp, [pc, #8]	; 402f0420 <hang+0x4>
+402f0414:	e59f4008 	ldr	r4, [pc, #8]	; 402f0424 <hang+0x8>
+402f0418:	e12fff34 	blx	r4
+
+402f041c <hang>:
+402f041c:	eafffffe 	b	402f041c <hang>
+402f0420:	402f14fc 	.word	0x402f14fc
+402f0424:	402f0428 	.word	0x402f0428
+
+402f0428 <firstc>:
+402f0428:	e52db004 	push	{fp}		; (str fp, [sp, #-4]!)
+402f042c:	e28db000 	add	fp, sp, #0
+402f0430:	e24dd014 	sub	sp, sp, #20
+402f0434:	e59f30b4 	ldr	r3, [pc, #180]	; 402f04f0 <firstc+0xc8>
+402f0438:	e50b3008 	str	r3, [fp, #-8]
+402f043c:	e59f30b0 	ldr	r3, [pc, #176]	; 402f04f4 <firstc+0xcc>
+402f0440:	e50b300c 	str	r3, [fp, #-12]
+402f0444:	e59f30ac 	ldr	r3, [pc, #172]	; 402f04f8 <firstc+0xd0>
+402f0448:	e50b3010 	str	r3, [fp, #-16]
+402f044c:	e51b3008 	ldr	r3, [fp, #-8]
+402f0450:	e2833d85 	add	r3, r3, #8512	; 0x2140
+402f0454:	e2833010 	add	r3, r3, #16
+402f0458:	e3a02027 	mov	r2, #39	; 0x27
+402f045c:	e5832000 	str	r2, [r3]
+402f0460:	e51b3008 	ldr	r3, [fp, #-8]
+402f0464:	e2833d85 	add	r3, r3, #8512	; 0x2140
+402f0468:	e2833020 	add	r3, r3, #32
+402f046c:	e3a02027 	mov	r2, #39	; 0x27
+402f0470:	e5832000 	str	r2, [r3]
+402f0474:	e51b3008 	ldr	r3, [fp, #-8]
+402f0478:	e2833d85 	add	r3, r3, #8512	; 0x2140
+402f047c:	e2833030 	add	r3, r3, #48	; 0x30
+402f0480:	e3a02027 	mov	r2, #39	; 0x27
+402f0484:	e5832000 	str	r2, [r3]
+402f0488:	e51b3008 	ldr	r3, [fp, #-8]
+402f048c:	e2833d86 	add	r3, r3, #8576	; 0x2180
+402f0490:	e3a02027 	mov	r2, #39	; 0x27
+402f0494:	e5832000 	str	r2, [r3]
+402f0498:	e51b300c 	ldr	r3, [fp, #-12]
+402f049c:	e2833e2b 	add	r3, r3, #688	; 0x2b0
+402f04a0:	e3a02002 	mov	r2, #2
+402f04a4:	e5832000 	str	r2, [r3]
+402f04a8:	e51b3010 	ldr	r3, [fp, #-16]
+402f04ac:	e2833e4d 	add	r3, r3, #1232	; 0x4d0
+402f04b0:	e51b2010 	ldr	r2, [fp, #-16]
+402f04b4:	e2822e4d 	add	r2, r2, #1232	; 0x4d0
+402f04b8:	e5922000 	ldr	r2, [r2]
+402f04bc:	e3c2261e 	bic	r2, r2, #31457280	; 0x1e00000
+402f04c0:	e5832000 	str	r2, [r3]
+402f04c4:	e51b3010 	ldr	r3, [fp, #-16]
+402f04c8:	e2833e65 	add	r3, r3, #1616	; 0x650
+402f04cc:	e51b2010 	ldr	r2, [fp, #-16]
+402f04d0:	e2822e65 	add	r2, r2, #1616	; 0x650
+402f04d4:	e5922000 	ldr	r2, [r2]
+402f04d8:	e382261e 	orr	r2, r2, #31457280	; 0x1e00000
+402f04dc:	e5832000 	str	r2, [r3]
+402f04e0:	e1a00000 	nop			; (mov r0, r0)
+402f04e4:	e24bd000 	sub	sp, fp, #0
+402f04e8:	e49db004 	pop	{fp}		; (ldr fp, [sp], #4)
+402f04ec:	e12fff1e 	bx	lr
+402f04f0:	44e10000 	.word	0x44e10000
+402f04f4:	48e00000 	.word	0x48e00000
+402f04f8:	4804c000 	.word	0x4804c000

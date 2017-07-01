@@ -33,9 +33,8 @@ void uart_init(uint32_t base_address)
 
 void uart_puts(uint32_t base_address, uint8_t *string)
 {
-    uint8_t *character = string;
-    while (*character)
-        uart_putc(base_address, *character++);
+    while (!(regread32(base_address + UART_LSR) & UART_LSR_TXFIFOE));
+    regwrite32(base_address + UART_THR, 64);
 }
 
 
