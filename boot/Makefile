@@ -10,7 +10,7 @@ kernel.elf: kernel.ld kernel.o console.o uart.o led.o reg.o
 	arm-none-eabi-ld -o $@ -T $^
 
 %.o: %.c
-	arm-none-eabi-gcc -Wall -c -o $@ $^
+	arm-none-eabi-gcc -O2 -c -o $@ $^
 
 %.o: %.s
 	arm-none-eabi-as -o $@ $^
