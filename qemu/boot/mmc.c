@@ -32,6 +32,37 @@
 
 
 
+uint32_t mmc_read_block(uint32_t block_address, uint8_t *data)
+{
+    /* Set transfer length to 512 bytes */
+    regwrite32(MMC + MMC_MMCIDataLength, 512);
+    mmc_send_command_with_response(16, 512);
+
+    /* Initiate single block read */
+    mmc_send_command_with_response(17, block_address * 512);
+
+    /* Read data into memory */
+    for (uint8_t *data_pointer = data; data_pointer < (data + 512); data_pointer += 4)
+    {
+        if (regread32(MMC + MMCIStatus) & MMC_MMCIStatus_RxDataAvlbl)
+            *data_pointer = regread32(MMC + MMC_MMCIFIFO);
+        else
+            return;
+    }
+}
+
+    /* Send CMD7 to select card */
+    regwrite32(MMC + MMC_MMCIArgument, relative_card_address);
+    regwrite32(MMC + MMC_MMCICommand, 7 | MMC_MMCICommand_Enable);
+
+
+
+uint32_t mmc_write_block(uint32_t block_address, uint8_t *data)
+{
+}
+
+
+
 void boot(void)
 {
     /* Send CMD0 to reset the card */
