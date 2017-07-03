@@ -42,6 +42,9 @@ sd_stat_cto             = (1 << 16)
 
 sd_cmd                  = 0x20c
 
+sd_arg                  = 0x208
+
+
 .text
 
 
@@ -177,6 +180,8 @@ mmc_identify_card:
     mov tmp, 0
     str tmp, [base, sd_cmd]
 
+    /* Wait 1ms (I don't actually know how to do this so I just read the sd_stat register 1024 times */
+
     mov index, 1024
 
 mmc_identify_card_delay:
@@ -185,32 +190,81 @@ mmc_identify_card_delay:
     subs index, index, 1
     bne mmc_identify_card_delay
 
+    /* Print out sd_stat */
+
+    ldr r0, [base, sd_stat]
+    bl console_pretty_hexprint
+
+    /* Clear the sd_stat cc bit */
+
     ldr tmp, [base, sd_stat]
     bic tmp, tmp, sd_stat_cc
     str tmp, [base, sd_stat]
 
+    /* Clear the sd_con init bit to end the initialization sequence */
+
     ldr tmp, [base, sd_con]
     bic tmp, tmp, sd_con_init
     str tmp, [base, sd_con]
+
+    /* Clear all bits in the sd_stat register */
 
     mov tmp, -1
     str tmp, [base, sd_stat]
 
     /* Change clock frequency to fit protocol */
 
-    ldr r0, =message_waiting_for_bus_power
-    bl console_puts
+        /* TODO: not sure what to set the clock frequency to */
 
     /* Send a CMD0 command */
 
     ldr tmp, =0x01a0000
     str tmp, [base, sd_cmd]
 
-    ldr r0, =message_waiting_for_bus_power
+        /* TODO: the TRM flowchart doesn't have any follow-up for the CMD0 */
+
+    /* Print out sd_stat */
+
+    ldr r0, [base, sd_stat]
+    bl console_pretty_hexprint
+
+    /* Send a CMD5 command */
+
+    mov tmp, 0
+    str tmp, [base, sd_arg]
+    ldr tmp, =0x51a0000
+    str tmp, [base, sd_cmd]
+
+mmc_identify_card_cmd5_wait:
+
+    ldr tmp, [base, sd_stat]
+/*
+    mov r0, tmp
+    bl console_pretty_hexprint
+*/
+    tst tmp, sd_stat_cc
+    bne mmc_identify_card_cmd5_complete
+    tst tmp, sd_stat_cto
+    bne mmc_identify_card_cmd5_timeout
+    b mmc_identify_card_cmd5_wait
+
+mmc_identify_card_cmd5_complete:
+
+    ldr r0, =message_card_is_sdio
+    bl console_puts
+    ldr tmp, [base, sd_stat]
+    bl console_pretty_hexprint
+    b mmc_identify_card_cmd5_done
+
+mmc_identify_card_cmd5_timeout:
+
+    ldr r0, =message_card_is_not_sdio
     bl console_puts
 
-    /* Send a CMD8 command */
+mmc_identify_card_cmd5_done:
 
+    /* Send a CMD8 command */
+/*
     ldr tmp, =0x81a0000
     str tmp, [base, sd_cmd]
 
@@ -228,7 +282,18 @@ mmc_identify_card_is_sd20:
     ldr r0, =message_card_is_sd20
     bl console_puts
     pop {r4-r6,pc}
+*/
 
+
+
+message_card_is_sdio:
+
+    .asciz "Card is SDIO.\r\n"
+
+
+message_card_is_not_sdio:
+
+    .asciz "Card is not SDIO.\r\n"
 
 
 message_card_is_sd20:

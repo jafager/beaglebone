@@ -1,0 +1,6 @@
+-fira-region=[one|all|mixed]   [default]
+-fpack-struct=<number>
+-fsched-stalled-insns-dep
+-fsched-stalled-insns-dep=<number>
+-fsched-stalled-insns=<number>
+Specifies the cost model for vectorization. -fvect-cost-model=[unlimited|dynamic|cheap]  [default]

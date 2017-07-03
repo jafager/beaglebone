@@ -1,0 +1,76 @@
+The following options control optimizations:
+  -O<number>                  		
+  -Ofast                      		
+  -Og                         		
+  -Os                         		
+  -faggressive-loop-optimizations 	[enabled]
+  -fauto-inc-dec              		[enabled]
+  -fdce                       		[enabled]
+  -fdelete-null-pointer-checks 		[enabled]
+  -fdse                       		[enabled]
+  -fearly-inlining            		[enabled]
+  -ffast-math                 		
+  -ffp-contract=[off|on|fast] 		fast
+  -ffp-int-builtin-inexact    		[enabled]
+  -ffunction-cse              		[enabled]
+  -fgcse-lm                   		[enabled]
+  -fhandle-exceptions         		
+  -finline                    		[enabled]
+  -finline-atomics            		[enabled]
+  -fira-algorithm=[CB|priority] 	CB
+  -fira-hoist-pressure        		[enabled]
+  -fira-region=[one|all|mixed] 		[default]
+  -fira-share-save-slots      		[enabled]
+  -fira-share-spill-slots     		[enabled]
+  -fivopts                    		[enabled]
+  -fjump-tables               		[enabled]
+  -flifetime-dse              		[enabled]
+  -flifetime-dse=             		2
+  -fmath-errno                		[enabled]
+  -fpack-struct=<number>      		
+  -fpeephole                  		[enabled]
+  -fplt                       		[enabled]
+  -fprefetch-loop-arrays      		[enabled]
+  -fprintf-return-value       		[enabled]
+  -freg-struct-return         		[enabled]
+  -frename-registers          		[enabled]
+  -freorder-blocks-algorithm=[simple|stc] 	simple
+  -frtti                      		[enabled]
+  -fsched-critical-path-heuristic 	[enabled]
+  -fsched-dep-count-heuristic 		[enabled]
+  -fsched-group-heuristic     		[enabled]
+  -fsched-interblock          		[enabled]
+  -fsched-last-insn-heuristic 		[enabled]
+  -fsched-rank-heuristic      		[enabled]
+  -fsched-spec                		[enabled]
+  -fsched-spec-insn-heuristic 		[enabled]
+  -fsched-stalled-insns-dep   		[enabled]
+  -fsched-stalled-insns-dep=<number> 	
+  -fsched-stalled-insns=<number> 	
+  -fschedule-fusion           		[enabled]
+  -fshort-enums               		[enabled]
+  -fshrink-wrap-separate      		[enabled]
+  -fsigned-zeros              		[enabled]
+  -fsimd-cost-model=[unlimited|dynamic|cheap] 	unlimited
+  -fsplit-ivs-in-unroller     		[enabled]
+  -fssa-backprop              		[enabled]
+  -fstack-reuse=[all|named_vars|none] 	all
+  -fstdarg-opt                		[enabled]
+  -fstrict-volatile-bitfields 		[enabled]
+  -fno-threadsafe-statics     		[enabled]
+  -ftrapping-math             		[enabled]
+  -ftree-cselim               		[enabled]
+  -ftree-forwprop             		[enabled]
+  -ftree-loop-if-convert      		[enabled]
+  -ftree-loop-im              		[enabled]
+  -ftree-loop-ivcanon         		[enabled]
+  -ftree-loop-optimize        		[enabled]
+  -ftree-parallelize-loops=<number> 	1
+  -ftree-phiprop              		[enabled]
+  -ftree-reassoc              		[enabled]
+  -ftree-scev-cprop           		[enabled]
+  -fvar-tracking              		[enabled]
+  -fvar-tracking-assignments  		[enabled]
+  Specifies the cost model for vectorization. -fvect-cost-model=[unlimited|dynamic|cheap] 	[default]
+  -fweb                       		[enabled]
+

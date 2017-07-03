@@ -1,0 +1,35 @@
+all: boot.bin kernel.bin kernel.img
+
+%.bin: %.elf
+	arm-none-eabi-objcopy $^ -O binary $@
+
+boot.elf: boot.ld startup.o boot.o console.o uart.o led.o reg.o
+	arm-none-eabi-ld -o $@ -T $^
+
+kernel.elf: kernel.ld kernel.o console.o uart.o led.o reg.o
+	arm-none-eabi-ld -o $@ -T $^
+
+%.o: %.c
+	arm-none-eabi-gcc -O1 -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -falign-labels -falign-loops -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -falign-labels -falign-loops -fcaller-saves -fcode-hoisting -fcrossjumping -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -falign-labels -falign-loops -fcaller-saves -fcode-hoisting -fcrossjumping -fcse-follow-jumps -fdevirtualize -fdevirtualize-speculatively -fexpensive-optimizations -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -falign-labels -falign-loops -fcaller-saves -fcode-hoisting -fcrossjumping -fcse-follow-jumps -fdevirtualize -fdevirtualize-speculatively -fexpensive-optimizations -fgcse -fhoist-adjacent-loads -findirect-inlining -finline-small-functions -fipa-bit-cp -fipa-cp -fipa-icf -fipa-icf-functions -fipa-icf-variables -c -o $@ $^
+	#arm-none-eabi-gcc -O1 -falign-functions -falign-jumps -falign-labels -falign-loops -fcaller-saves -fcode-hoisting -fcrossjumping -fcse-follow-jumps -fdevirtualize -fdevirtualize-speculatively -fexpensive-optimizations -fgcse -fhoist-adjacent-loads -findirect-inlining -finline-small-functions -fipa-bit-cp -fipa-cp -fipa-icf -fipa-icf-functions -fipa-icf-variables -fipa-ra -fipa-sra -fipa-vrp -fisolate-erroneous-paths-dereference -flra-remat -foptimize-sibling-calls -foptimize-strlen -fpartial-inlining -fpeephole2 -freorder-blocks-algorithm=stc -freorder-functions -frerun-cse-after-loop -fschedule-insns -fschedule-insns2 -fstore-merging -fstrict-aliasing -fstrict-overflow -fthread-jumps -ftree-pre -ftree-switch-conversion -ftree-tail-merge -ftree-vrp -fvect-cost-model=cheap -c -o $@ $^
+
+%.o: %.s
+	arm-none-eabi-as -o $@ $^
+
+%.img: %.bin
+	./mksdimg $^ $@
+
+clean:
+	rm -f *.bin *.elf *.o *.img
+
+dump: boot.elf
+	arm-none-eabi-objdump -d $^ | more
+
+read: boot.elf
+	arm-none-eabi-readelf -a $^ | more

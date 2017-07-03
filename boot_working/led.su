@@ -1,0 +1,2 @@
+led.c:7:6:led_init	16	static
+led.c:43:6:led_write	8	static

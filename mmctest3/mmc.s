@@ -252,6 +252,51 @@ mmc_identify_card:
 
     push {r4-r5,lr}
 
+    /* Send CMD5 */
+
+    ldr r0, =message_sending_cmd5
+    bl console_puts
+
+    ldr base, =mmchs0_base
+    ldr tmp, =0x51a0000
+    str tmp, [base, sd_cmd]
+
+    /* Wait for CMD5 to finish */
+
+mmc_identify_card_wait_for_cmd5:
+
+    ldr base, =mmchs0_base
+    ldr tmp, [base, sd_stat]
+    tst tmp, sd_stat_cc
+    bne mmc_identify_card_cmd5_complete
+    tst tmp, sd_stat_cto
+    bne mmc_identify_card_cmd5_timeout
+    tst tmp, sd_stat_erri
+    beq mmc_identify_card_wait_for_cmd5
+    mov r0, tmp
+    bl console_pretty_hexprint
+    b .
+
+mmc_identify_card_cmd5_complete:
+
+    ldr r0, =message_card_is_sdio
+    bl console_puts
+    b mmc_identify_card_cmd5_done
+
+mmc_identify_card_cmd5_timeout:
+
+    ldr r0, =message_card_is_not_sdio
+    bl console_puts
+
+mmc_identify_card_cmd5_done:
+
+    /* Clear command complete internal interrupt */
+
+    ldr base, =mmchs0_base
+    ldr tmp, [base, sd_stat]
+    bic tmp, tmp, sd_stat_cc
+    str tmp, [base, sd_stat]
+
     /* TODO: Change clock frequency to fit protocol? */
 
     /* Send CMD8 */
@@ -302,6 +347,18 @@ mmc_identify_card_cmd8_complete:
 message_card_is_sd20:
 
     .asciz "Card is SD 2.0 compliant.\r\n"
+
+message_card_is_sdio:
+
+    .asciz "Card is SDIO.\r\n"
+
+message_card_is_not_sdio:
+
+    .asciz "Card is not SDIO.\r\n"
+
+message_sending_cmd5:
+
+    .asciz "Sending CMD5...\r\n"
 
 message_sending_cmd8:
 

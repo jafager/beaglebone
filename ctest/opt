@@ -1,0 +1,16 @@
+  -ffast-math                 		
+  -ffp-contract=fast
+  -fhandle-exceptions         		
+  -fira-algorithm=CB
+  -flifetime-dse=2
+  -freorder-blocks-algorithm=simple
+  -fsimd-cost-model=unlimited
+  -fstack-reuse=all
+  -ftree-parallelize-loops=1
+
+  -fpack-struct=<number>      		
+  -fsched-stalled-insns-dep=<number> 	
+  -fsched-stalled-insns=<number> 	
+  -fira-region=[one|all|mixed] 		[default]
+  -fvect-cost-model=[unlimited|dynamic|cheap] 	[default]
+

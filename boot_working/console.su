@@ -1,0 +1,5 @@
+console.c:7:6:console_init	0	static
+console.c:14:6:console_puts	0	static
+console.c:21:6:console_putc	0	static
+console.c:28:9:console_getc	0	static
+console.c:35:6:console_hexprint	16	static

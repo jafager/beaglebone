@@ -1,0 +1,4 @@
+uart.c:7:6:uart_init	16	static
+uart.c:43:6:uart_putc	16	static
+uart.c:34:6:uart_puts	16	static
+uart.c:51:9:uart_getc	16	static
