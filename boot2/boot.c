@@ -23,6 +23,7 @@
 #define SD_CMD_MASK                                 0x3ffb0037
 #define SD_CMD_RSP_TYPE_NONE                        (0x0 << 16)
 #define SD_CMD_RSP_TYPE_48                          (0x2 << 16)
+#define SD_CMD_RSP_TYPE_136                         (0x1 << 16)
 #define SD_CON                                      0x12c
 #define SD_CON_DW8                                  (1 << 5)
 #define SD_CON_DW8_1OR4BIT                          (0 << 5)
@@ -64,6 +65,9 @@
 #define SD_CMD8_VHS_2736                            (1 << 8)
 #define SD_CMD8_CHECK_PATTERN                       (0xaa << 0)
 #define SD_RSP10                                    0x210
+#define SD_RSP32                                    0x214
+#define SD_RSP54                                    0x218
+#define SD_RSP76                                    0x21c
 #define SD_CMD5_VDD_2930                            (1 << 17)
 #define SD_CMD5_VDD_3031                            (1 << 18)
 #define SD_ACMD41_VDD_2930                          (1 << 17)
@@ -332,4 +336,113 @@ void boot(void)
         console_puts("Card is high capacity.\r\n");
     else
         console_puts("Card is standard capacity.\r\n");
+
+    /* Send CMD2 */
+    regwrite32(MMC0 + SD_ARG, 0);
+    regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (2 << SD_CMD_INDX) | SD_CMD_RSP_TYPE_48);
+    do
+    {
+        status = regread32(MMC0 + SD_STAT);
+    }
+    while (!((status & SD_STAT_CC) || (status & SD_STAT_ERRI)));
+    if (status & SD_STAT_ERRI)
+    {
+        console_puts("Error in CMD2: 0x");
+        console_hexprint(status);
+        console_puts("\r\n");
+        console_puts("CMD2 response: 0x");
+        console_hexprint(regread32(MMC0 + SD_RSP10));
+        console_puts("\r\n");
+        while (1);
+    }
+    console_puts("CMD2 complete.\r\n");
+
+    /* Clear CC internal interrupt */
+    regwrite32(MMC0 + SD_STAT, 0);
+    //regmask32(MMC0 + SD_STAT, SD_STAT_CC, SD_STAT_CC);
+    console_puts("CC interrupt cleared.\r\n");
+
+    /* Send CMD3 */
+    regwrite32(MMC0 + SD_ARG, 0);
+    regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (3 << SD_CMD_INDX) | SD_CMD_CICE | SD_CMD_CCCE | SD_CMD_RSP_TYPE_48);
+    do
+    {
+        status = regread32(MMC0 + SD_STAT);
+    }
+    while (!((status & SD_STAT_CC) || (status & SD_STAT_ERRI)));
+    if (status & SD_STAT_ERRI)
+    {
+        console_puts("Error in CMD3: 0x");
+        console_hexprint(status);
+        console_puts("\r\n");
+        console_puts("CMD3 response: 0x");
+        console_hexprint(regread32(MMC0 + SD_RSP10));
+        console_puts("\r\n");
+        while (1);
+    }
+    console_puts("CMD3 complete.\r\n");
+
+    /* Get relative card address from CMD3 response */
+    uint32_t relative_card_address = regread32(MMC0 + SD_RSP10) & 0xffff0000;
+    console_puts("RCA from CMD3 is ");
+    console_hexprint(relative_card_address);
+    console_puts("\r\n");
+
+    /* Clear CC internal interrupt */
+    regmask32(MMC0 + SD_STAT, SD_STAT_CC, SD_STAT_CC);
+    console_puts("CC interrupt cleared.\r\n");
+
+    /* Send CMD9 */
+    regwrite32(MMC0 + SD_ARG, relative_card_address);
+    regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (9 << SD_CMD_INDX) | SD_CMD_CICE | SD_CMD_CCCE | SD_CMD_RSP_TYPE_136);
+    do
+    {
+        status = regread32(MMC0 + SD_STAT);
+    }
+    while (!((status & SD_STAT_CC) || (status & SD_STAT_ERRI)));
+    if (status & SD_STAT_ERRI)
+    {
+        console_puts("Error in CMD9: 0x");
+        console_hexprint(status);
+        console_puts("\r\n");
+        while (1);
+    }
+    console_puts("CMD9 complete.\r\n");
+
+    /* Get long response */
+    uint32_t long_response[4];
+    long_response[0] = regread32(MMC0 + SD_RSP10);
+    long_response[1] = regread32(MMC0 + SD_RSP32);
+    long_response[2] = regread32(MMC0 + SD_RSP54);
+    long_response[3] = regread32(MMC0 + SD_RSP76);
+
+    /* Calculate card capacity */
+    uint32_t c_size = ((long_response[1] >> 30) & 0b11) | ((long_response[2] & 0x3ff) << 2);
+    uint32_t c_size_mult = (long_response[1] >> 15) & 0b111;
+    uint32_t read_bl_len = (long_response[2] >> 16) & 0b1111;
+    uint32_t mult = 1 << (c_size_mult + 2);
+    uint32_t blocknr = (c_size + 1) * mult;
+    uint32_t block_len = 1 << read_bl_len;
+    uint32_t capacity = blocknr * block_len;
+    console_puts("c_size: ");
+    console_hexprint(c_size);
+    console_puts("\r\n");
+    console_puts("c_size_mult: ");
+    console_hexprint(c_size_mult);
+    console_puts("\r\n");
+    console_puts("read_bl_len: ");
+    console_hexprint(read_bl_len);
+    console_puts("\r\n");
+    console_puts("mult: ");
+    console_hexprint(mult);
+    console_puts("\r\n");
+    console_puts("blocknr: ");
+    console_hexprint(blocknr);
+    console_puts("\r\n");
+    console_puts("block_len: ");
+    console_hexprint(block_len);
+    console_puts("\r\n");
+    console_puts("capacity: ");
+    console_hexprint(capacity);
+    console_puts("\r\n");
 }
