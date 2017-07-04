@@ -60,6 +60,8 @@
 #define SD_SYSCTL_SRC                               (1 << 25)
 #define SD_SYSSTATUS                                0x114
 #define SD_SYSSTATUS_RESETDONE                      (1 << 0)
+#define SD_CMD8_VHS_2736                            (1 << 8)
+#define SD_CMD8_CHECK_PATTERN                       (0xaa << 0)
 
 
 
@@ -209,13 +211,18 @@ void boot(void)
     console_puts("CMD5 timed out.\r\n");
     console_puts("Card is not SDIO.\r\n");
 
+    /* Clear CTO internal interrupt */
+    regmask32(MMC0 + SD_STAT, SD_STAT_CTO, SD_STAT_CTO);
+    console_puts("CTO interrupt cleared.\r\n");
+
     /* Software reset for mmc_cmd line (yes this is weird but it follows the TRM) */
     regmask32(MMC0 + SD_SYSCTL, SD_SYSCTL_SRC, SD_SYSCTL_SRC);
     while (!(regread32(MMC0 + SD_SYSCTL) & SD_SYSCTL_SRC));
     while (regread32(MMC0 + SD_SYSCTL) & SD_SYSCTL_SRC);
+    console_puts("Completed software reset of mmc_cmd line.\r\n");
 
     /* Send CMD8 */
-    regwrite32(MMC0 + SD_ARG, 0xaa);
+    regwrite32(MMC0 + SD_ARG, SD_CMD8_VHS_2736 | SD_CMD8_CHECK_PATTERN);
     regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (8 << SD_CMD_INDX) | SD_CMD_CICE | SD_CMD_CCCE | SD_CMD_RSP_TYPE_48);
     console_puts("CMD8 sent.\r\n");
 
@@ -233,7 +240,15 @@ void boot(void)
         while (1);
     }
     if (status & SD_STAT_CC)
+    {
         console_puts("Card supports 2.0 specification.\r\n");
+    }
     else
+    {
         console_puts("Card does not support 2.0 specification.\r\n");
+    }
+    
+    /* Clear CC and CTO internal interrupts */
+    regmask32(MMC0 + SD_STAT, SD_STAT_CC | SD_STAT_CTO, SD_STAT_CC | SD_STAT_CTO);
+    console_puts("CC and CTO interrupts cleared.\r\n");
 }
