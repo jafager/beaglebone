@@ -21,6 +21,7 @@
 #define SD_CMD_CICE                                 (1 << 20)
 #define SD_CMD_INDX                                 24
 #define SD_CMD_MASK                                 0x3ffb0037
+#define SD_CMD_RSP_TYPE_NONE                        (0x0 << 16)
 #define SD_CMD_RSP_TYPE_48                          (0x2 << 16)
 #define SD_CON                                      0x12c
 #define SD_CON_DW8                                  (1 << 5)
@@ -62,6 +63,14 @@
 #define SD_SYSSTATUS_RESETDONE                      (1 << 0)
 #define SD_CMD8_VHS_2736                            (1 << 8)
 #define SD_CMD8_CHECK_PATTERN                       (0xaa << 0)
+#define SD_RSP10                                    0x210
+#define SD_CMD5_VDD_2930                            (1 << 17)
+#define SD_CMD5_VDD_3031                            (1 << 18)
+#define SD_ACMD41_VDD_2930                          (1 << 17)
+#define SD_ACMD41_VDD_3031                          (1 << 18)
+#define SD_ACMD41_HCS                               (1 << 30)
+#define SD_OCR_BUSY                                 (1 << 31)
+#define SD_OCR_CCS                                  (1 << 30)
 
 
 
@@ -186,6 +195,7 @@ void boot(void)
     console_puts("CC interrupt cleared.\r\n");
 
     /* Send CMD5 */
+    regwrite32(MMC0 + SD_ARG, SD_CMD5_VDD_2930 | SD_CMD5_VDD_3031);
     regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (5 << SD_CMD_INDX) | SD_CMD_CICE | SD_CMD_CCCE | SD_CMD_RSP_TYPE_48);
     console_puts("CMD5 sent.\r\n");
 
@@ -239,16 +249,87 @@ void boot(void)
         console_puts("\r\n");
         while (1);
     }
+    if (status & SD_STAT_CTO)
+    {
+        console_puts("Card does not support 2.0 specification.\r\n");
+        console_puts("Non-2.0 cards are not supported.\r\n");
+        while (1);
+    }
     if (status & SD_STAT_CC)
     {
         console_puts("Card supports 2.0 specification.\r\n");
+        uint32_t response = regread32(MMC0 + SD_RSP10);
+        if ((response & 0xff) != SD_CMD8_CHECK_PATTERN)
+        {
+            console_puts("CMD8 response 0x");
+            console_hexprint(response);
+            console_puts(" does not match check pattern.\r\n");
+            while (1);
+        }
+        console_puts("CMD8 response matches check pattern.\r\n");
     }
-    else
+
+    /* Software reset for mmc_cmd line (yes this is weird but it follows the TRM) */
+    regmask32(MMC0 + SD_SYSCTL, SD_SYSCTL_SRC, SD_SYSCTL_SRC);
+    while (!(regread32(MMC0 + SD_SYSCTL) & SD_SYSCTL_SRC));
+    while (regread32(MMC0 + SD_SYSCTL) & SD_SYSCTL_SRC);
+    console_puts("Completed software reset of mmc_cmd line.\r\n");
+    /* NOTE: Per the TRM this resets the CC interrupt */
+
+    /* Send CMD55/ACMD41 */
+    uint32_t response;
+    do
     {
-        console_puts("Card does not support 2.0 specification.\r\n");
+        /* Send CMD55 */
+        regwrite32(MMC0 + SD_ARG, 0);
+        regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (55 << SD_CMD_INDX) | SD_CMD_CICE | SD_CMD_CCCE | SD_CMD_RSP_TYPE_48);
+        do
+        {
+            status = regread32(MMC0 + SD_STAT);
+        }
+        while (!((status & SD_STAT_CC) || (status & SD_STAT_ERRI)));
+        if (status & SD_STAT_ERRI)
+        {
+            console_puts("Error in CMD55: 0x");
+            console_hexprint(status);
+            console_puts("\r\n");
+            while (1);
+        }
+        console_puts("CMD55 complete.\r\n");
+
+        /* Clear CC internal interrupt */
+        regmask32(MMC0 + SD_STAT, SD_STAT_CC, SD_STAT_CC);
+        console_puts("CC interrupt cleared.\r\n");
+
+        /* Send ACMD41 */
+        regwrite32(MMC0 + SD_ARG, SD_ACMD41_HCS | SD_ACMD41_VDD_2930 | SD_ACMD41_VDD_3031);
+        regmask32(MMC0 + SD_CMD, SD_CMD_MASK, (41 << SD_CMD_INDX) | SD_CMD_RSP_TYPE_48);
+        do
+        {
+            status = regread32(MMC0 + SD_STAT);
+        }
+        while (!((status & SD_STAT_CC) || (status & SD_STAT_ERRI)));
+        if (status & SD_STAT_ERRI)
+        {
+            console_puts("Error in ACMD41: 0x");
+            console_hexprint(status);
+            console_puts("\r\n");
+            console_puts("ACMD41 response: 0x");
+            console_hexprint(regread32(MMC0 + SD_RSP10));
+            console_puts("\r\n");
+            while (1);
+        }
+        console_puts("ACMD41 complete.\r\n");
+
+        /* Get response */
+        response = regread32(MMC0 + SD_RSP10);
     }
-    
-    /* Clear CC and CTO internal interrupts */
-    regmask32(MMC0 + SD_STAT, SD_STAT_CC | SD_STAT_CTO, SD_STAT_CC | SD_STAT_CTO);
-    console_puts("CC and CTO interrupts cleared.\r\n");
+    while (!(response & SD_OCR_BUSY));
+    console_puts("Card powered up.\r\n");
+
+    /* Determine card capacity type */
+    if (response & SD_OCR_CCS)
+        console_puts("Card is high capacity.\r\n");
+    else
+        console_puts("Card is standard capacity.\r\n");
 }
