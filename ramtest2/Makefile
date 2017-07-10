@@ -3,7 +3,7 @@ all: ramtest.bin
 %.bin: %.elf
 	arm-none-eabi-objcopy $^ -O binary $@
 
-ramtest.elf: ramtest.ld startup.o ramtest.o mmc.o console.o uart.o led.o reg.o
+ramtest.elf: ramtest.ld startup.o ramtest.o sdram.o console.o uart.o led.o reg.o
 	arm-none-eabi-ld -o $@ -T $^
 
 %.o: %.c
