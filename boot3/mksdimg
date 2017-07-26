@@ -1,0 +1,69 @@
+#!/usr/bin/perl -T
+
+
+
+use strict;
+use warnings;
+
+
+
+if ((scalar @ARGV) != 2)
+{
+    die "Usage: mksdimage <binary file> <image file>\n";
+}
+
+
+
+my $binfile = $ARGV[0];
+if ($binfile =~ /^([A-Za-z0-9._-]+)$/)
+{
+    $binfile = $1;
+}
+else
+{
+    die "Binary file name '$binfile' contains illegal characters.\n";
+}
+my @binfile_stat = stat($binfile);
+if (!@binfile_stat)
+{
+    die "Cannot stat binary file '$binfile'.\n";
+}
+my $binfile_size = $binfile_stat[7];
+open BINFILE, "<:raw", $binfile
+    or die "Cannot open binary file '$binfile'.\n";
+
+
+
+my $imgfile = $ARGV[1];
+if ($imgfile =~ /^([A-Za-z0-9._-]+)$/)
+{
+    $imgfile = $1;
+}
+else
+{
+    die "Image file name '$imgfile' contains illegal characters.\n";
+}
+open IMGFILE, ">:raw", $imgfile
+    or die "Cannot open image file '$imgfile'.\n";
+
+
+
+print IMGFILE pack("V", $binfile_size);
+do
+{
+    my $binfile_bytes_read = read BINFILE, my $binfile_data, 1;
+    if (!(defined $binfile_bytes_read))
+    {
+        die "Error reading data from binary file '$binfile'.\n";
+    }
+    if ($binfile_bytes_read > 0)
+    {
+        print IMGFILE $binfile_data;
+    }
+}
+until (eof(BINFILE));
+
+
+
+close IMGFILE;
+close BINFILE;
