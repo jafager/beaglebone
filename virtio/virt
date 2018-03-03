@@ -1,0 +1,12 @@
+#!/bin/bash
+
+qemu-system-arm \
+    -M virt \
+    -cpu cortex-a15 \
+    -m 512m \
+    -nographic \
+    -monitor stdio \
+    -serial none \
+    -device virtio-serial-pci \
+    -device virtserialport,chardev=serial0 \
+    -chardev file,path=virt.out,id=serial0

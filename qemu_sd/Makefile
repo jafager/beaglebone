@@ -11,4 +11,4 @@ clean:
 	rm -f *.bin *.elf *.o
 
 run: qemu.bin
-	qemu-system-arm -m 128 -kernel qemu.bin -nographic -machine integratorcp -cpu cortex-a8 -sd qemu.img
+	qemu-system-arm-debug -m 128 -kernel qemu.bin -nographic -machine integratorcp -cpu cortex-a8 -drive if=sd,index=0,file=qemu.img,format=raw
